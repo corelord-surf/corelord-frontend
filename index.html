@@ -3,88 +3,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Corelord - Surf Planner</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f4f4f4;
-      padding: 2rem;
-      max-width: 600px;
-      margin: auto;
-    }
-
-    h1 {
-      color: #333;
-      text-align: center;
-    }
-
-    label {
-      display: block;
-      margin-top: 1rem;
-      font-weight: bold;
-    }
-
-    input, textarea {
-      width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.5rem;
-    }
-
-    button {
-      margin-top: 1.5rem;
-      padding: 0.7rem 1.2rem;
-      font-size: 1rem;
-      background-color: #0078D4;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #005fa3;
-    }
-
-    #output {
-      margin-top: 2rem;
-      background: white;
-      padding: 1rem;
-      border: 1px solid #ccc;
-      white-space: pre-wrap;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Corelord Surf Planner</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Corelord Surf Planner</h1>
+  <div class="container">
+    <h1>🌊 Corelord Surf Planner</h1>
+    <form id="surfForm">
+      <label for="surfBreak">Surf Break:</label>
+      <input type="text" id="surfBreak" name="surfBreak" required />
 
-  <label for="break">Surf Break</label>
-  <input type="text" id="break" placeholder="e.g. Snapper Rocks" />
+      <label for="availability">Availability (comma-separated):</label>
+      <input type="text" id="availability" name="availability" placeholder="e.g. Monday AM, Wednesday PM" required />
 
-  <label for="availability">Availability (comma-separated)</label>
-  <input type="text" id="availability" placeholder="e.g. Mon, Wed, Sat" />
+      <label for="conditions">Preferred Conditions:</label>
+      <input type="text" id="conditions" name="conditions" placeholder="e.g. light offshore wind, 3-5ft swell" required />
 
-  <label for="conditions">Preferred Conditions</label>
-  <textarea id="conditions" rows="3" placeholder="e.g. Light offshore wind, 3-5ft swell"></textarea>
+      <button type="submit">Get Surf Plan</button>
+    </form>
+    <div id="result"></div>
+  </div>
 
-  <button onclick="submitPlan()">Generate Plan</button>
-
-  <div id="output"></div>
-
-  <script>
-    async function submitPlan() {
-      const surfBreak = document.getElementById('break').value;
-      const availability = document.getElementById('availability').value.split(',').map(x => x.trim());
-      const conditions = document.getElementById('conditions').value;
-
-      const res = await fetch('/api/surfplan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ break: surfBreak, availability, conditions })
-      });
-
-      const data = await res.json();
-      document.getElementById('output').textContent = data.plan || 'No response';
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
