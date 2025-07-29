@@ -2,13 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>CoreLord - Surf Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Surf Planner | CoreLord</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="surf.js"></script>
   </head>
-  <body class="bg-gray-100 text-gray-800 flex items-center justify-center h-screen">
-    <div class="text-center">
-      <h1 class="text-4xl font-bold mb-4">Surf Planner Coming Soon</h1>
-      <p class="text-lg">This is the future home of your personalised surf forecast. 🤙</p>
-    </div>
+  <body class="bg-gray-100 text-gray-900">
+    <header class="bg-gray-900 text-white p-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">CoreLord</h1>
+      <button onclick="window.location.href='profile.html'" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded">
+        Edit Profile
+      </button>
+    </header>
+
+    <main class="p-6 max-w-4xl mx-auto">
+      <section class="mb-10">
+        <h2 class="text-3xl font-bold mb-4">Welcome back 👋</h2>
+        <div id="profileInfo" class="bg-white shadow p-4 rounded text-sm"></div>
+      </section>
+
+      <section>
+        <h2 class="text-2xl font-bold mb-4">Surf Forecasts</h2>
+        <div id="forecastContainer" class="grid md:grid-cols-2 gap-6"></div>
+      </section>
+    </main>
   </body>
 </html>
