@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile Setup - CoreLord</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-sky-50 text-gray-800">
+    <div class="max-w-3xl mx-auto py-10 px-6">
+      <h1 class="text-3xl font-bold mb-6 text-center">Set up your surf profile</h1>
+      <form id="profileForm">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block font-semibold mb-1">Name</label>
+            <input type="text" class="w-full border px-4 py-2 rounded" required />
+          </div>
+          <div>
+            <label class="block font-semibold mb-1">Email</label>
+            <input type="email" class="w-full border px-4 py-2 rounded" required />
+          </div>
+          <div>
+            <label class="block font-semibold mb-1">Phone Number</label>
+            <input type="tel" class="w-full border px-4 py-2 rounded" placeholder="+61..." />
+          </div>
+          <div>
+            <label class="block font-semibold mb-1">Region</label>
+            <select class="w-full border px-4 py-2 rounded" required>
+              <option value="">Select region</option>
+              <option value="ericeira">Ericeira (Portugal)</option>
+              <option value="torquay">Torquay (Australia)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <label class="block font-semibold mb-2">Update Preference</label>
+          <label class="inline-flex items-center mr-4">
+            <input type="checkbox" name="daily" class="mr-2" /> Daily Updates
+          </label>
+          <label class="inline-flex items-center">
+            <input type="checkbox" name="weekly" class="mr-2" /> Weekly Update (Sundays)
+          </label>
+        </div>
+
+        <div class="mt-10 border-t pt-6">
+          <h2 class="text-2xl font-bold mb-4">Weekly Surf Availability</h2>
+          <p class="mb-4 text-sm text-gray-600">Choose when you are available to surf each day (2-hour daytime slots).</p>
+          <div id="availability" class="space-y-6">
+            <!-- Days of the week dynamically inserted by JS -->
+          </div>
+        </div>
+
+        <div class="mt-10 text-center">
+          <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+            Save Profile
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+      const slots = ["6am-8am", "8am-10am", "10am-12pm", "12pm-2pm", "2pm-4pm", "4pm-6pm"];
+      const container = document.getElementById("availability");
+
+      days.forEach(day => {
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = `
+          <label class="font-semibold block mb-1">${day}</label>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+            ${slots.map(slot => `
+              <label class="inline-flex items-center">
+                <input type="checkbox" name="${day}-${slot}" class="mr-2" />
+                ${slot}
+              </label>
+            `).join('')}
+          </div>
+        `;
+        container.appendChild(wrapper);
+      });
+    </script>
+  </body>
+</html>
