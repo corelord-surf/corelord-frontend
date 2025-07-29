@@ -43,44 +43,5 @@
         </div>
       </div>
     </section>
-
-    <script>
-      const msalInstance = new msal.PublicClientApplication({
-        auth: {
-          clientId: "315eede8-ee31-4487-b202-81e495e8f9fe",
-          authority: "https://login.microsoftonline.com/common",
-          redirectUri: window.location.origin,
-        },
-      });
-
-      function renderAuthButtons() {
-        const account = msalInstance.getAllAccounts()[0];
-        const container = document.getElementById("auth-buttons");
-        container.innerHTML = "";
-
-        if (account) {
-          const logoutBtn = document.createElement("button");
-          logoutBtn.textContent = "Logout";
-          logoutBtn.className = "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded";
-          logoutBtn.onclick = () => {
-            msalInstance.logoutRedirect();
-          };
-          container.appendChild(logoutBtn);
-        } else {
-          const loginBtn = document.createElement("button");
-          loginBtn.textContent = "Login";
-          loginBtn.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2";
-          loginBtn.onclick = () => signIn();
-          const signUpBtn = document.createElement("button");
-          signUpBtn.textContent = "Sign Up";
-          signUpBtn.className = "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded";
-          signUpBtn.onclick = () => signUp();
-          container.appendChild(loginBtn);
-          container.appendChild(signUpBtn);
-        }
-      }
-
-      window.addEventListener("DOMContentLoaded", renderAuthButtons);
-    </script>
   </body>
 </html>
