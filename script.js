@@ -2,7 +2,7 @@ const msalConfig = {
   auth: {
     clientId: "825d8657-c509-42b6-9107-dd5e39268723",
     authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
-    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
+    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net",
   },
   cache: {
     cacheLocation: "localStorage",
@@ -37,17 +37,39 @@ async function signIn() {
     // Check if profile exists
     const res = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
       headers: {
-        "Authorization": `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     if (res.status === 404) {
       window.location.href = "profile.html";
     } else {
-      window.location.href = "surf.html"; // Next screen
+      window.location.href = "surf.html";
     }
   } catch (err) {
     console.error("Sign-in error:", err);
     alert("Sign-in failed. See console for details.");
   }
 }
+
+function signUp() {
+  // Optional: route to a dedicated registration page if using custom policies (B2C)
+  signIn();
+}
+
+function renderAuthButtons() {
+  const account = msalInstance.getAllAccounts()[0];
+  const container = document.getElementById("auth-buttons");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (account) {
+    const logoutBtn = document.createElement("button");
+    logoutBtn.textContent = "Logout";
+    logoutBtn.className = "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded";
+    logoutBtn.onclick = () => {
+      msalInstance.logoutRedirect();
+    };
+    container.appendChild(logoutBtn);
+  }
