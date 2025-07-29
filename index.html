@@ -5,72 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CoreLord - Surf Forecasting Reimagined</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ✅ Add MSAL library -->
+    <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
     <script defer src="script.js"></script>
   </head>
-  <body class="bg-gradient-to-b from-blue-50 via-cyan-100 to-white text-gray-800 font-sans">
-    <!-- Header -->
-    <header class="bg-gradient-to-r from-sky-900 to-cyan-700 text-white shadow-lg">
-      <div class="container mx-auto flex justify-between items-center px-6 py-4">
-        <h1 class="text-3xl font-extrabold tracking-tight">CoreLord</h1>
-        <div>
-          <button
-            onclick="signIn()"
-            class="bg-white text-sky-900 font-semibold px-4 py-2 rounded-lg shadow hover:bg-gray-100 transition"
-          >
-            Login
-          </button>
-          <button
-            onclick="signUp()"
-            class="ml-2 bg-white text-cyan-700 font-semibold px-4 py-2 rounded-lg shadow hover:bg-gray-100 transition"
-          >
-            Sign Up
-          </button>
-        </div>
+  <body class="bg-white text-gray-800">
+    <header class="flex justify-between items-center p-6 bg-gray-900 text-white">
+      <h1 class="text-2xl font-bold">CoreLord</h1>
+      <div>
+        <button
+          onclick="signIn()"
+          class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2"
+        >
+          Login
+        </button>
+        <button
+          onclick="signUp()"
+          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+        >
+          Sign Up
+        </button>
       </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="text-center py-16 px-6">
-      <h2 class="text-5xl font-extrabold text-gray-900 mb-4">
-        The next revolution in surf planning
-      </h2>
-      <p class="text-xl max-w-2xl mx-auto text-gray-700">
-        AI-backed surf forecasting built for those who live for the swell.
-        Plan your week, lock in your breaks, and surf smarter.
+    <section class="text-center py-20 px-4">
+      <h2 class="text-4xl font-bold mb-4">The next revolution in surf planning</h2>
+      <p class="text-xl max-w-2xl mx-auto mb-8">
+        AI-backed surf forecasting built for those who live for the swell. Plan
+        your week, lock in your breaks, and surf smarter.
       </p>
-    </section>
-
-    <!-- Locations Section -->
-    <section class="max-w-6xl mx-auto px-6 pb-16">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <!-- Ericeira -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div class="flex flex-col lg:flex-row justify-center gap-8">
+        <div class="text-center">
           <img
-            src="assets/images/ribeira.png"
+            src="src/assets/ericeira.jpg"
             alt="Ericeira"
-            class="w-full h-64 object-cover"
+            class="w-full max-w-md rounded-lg shadow-lg"
           />
-          <div class="p-6">
-            <h3 class="text-2xl font-bold text-gray-800 mb-2">Ericeira, Portugal</h3>
-            <p class="text-gray-600">
-              Currently supported as part of our beta program. Explore world-class breaks from Coxos to Ribeira.
-            </p>
-          </div>
+          <h3 class="text-xl font-semibold mt-4">Ericeira, Portugal</h3>
+          <p class="text-sm text-gray-600">Now supported as part of our beta</p>
         </div>
-
-        <!-- Torquay -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="text-center">
           <img
-            src="assets/images/bells.png"
+            src="src/assets/torquay.jpg"
             alt="Torquay"
-            class="w-full h-64 object-cover"
+            class="w-full max-w-md rounded-lg shadow-lg"
           />
-          <div class="p-6">
-            <h3 class="text-2xl font-bold text-gray-800 mb-2">Torquay, Australia</h3>
-            <p class="text-gray-600">
-              Supported in beta with access to Bells Beach, Jan Juc, Winki Pop and more along Victoria's Surf Coast.
-            </p>
-          </div>
+          <h3 class="text-xl font-semibold mt-4">Torquay, Australia</h3>
+          <p class="text-sm text-gray-600">Now supported as part of our beta</p>
         </div>
       </div>
     </section>
