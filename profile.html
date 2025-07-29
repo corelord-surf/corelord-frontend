@@ -5,71 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Profile Setup - CoreLord</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
     <script defer src="profile.js"></script>
   </head>
-  <body class="bg-sky-50 text-gray-800">
-    <div class="max-w-3xl mx-auto py-10 px-6">
-      <h1 class="text-3xl font-bold mb-6 text-center">Set up your surf profile</h1>
-      <form id="profileForm">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="block font-semibold mb-1">Name</label>
-            <input type="text" id="displayName" class="w-full border px-4 py-2 rounded" required />
+  <body class="bg-gray-100 text-gray-800">
+    <header class="flex justify-between items-center p-6 bg-gray-900 text-white">
+      <h1 class="text-2xl font-bold">CoreLord</h1>
+      <div id="auth-buttons"></div>
+    </header>
+
+    <main class="max-w-3xl mx-auto py-12 px-4">
+      <h2 class="text-3xl font-bold mb-6 text-center">Tell us when you can surf 🌊</h2>
+      <form id="profileForm" class="space-y-6">
+        <div>
+          <label class="block font-medium mb-2">Preferred Break</label>
+          <select id="break" class="w-full p-2 border rounded">
+            <option value="Ericeira">Ericeira</option>
+            <option value="Torquay">Torquay</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-medium mb-2">Weekly Availability</label>
+          <div id="availability" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Days and times populated by JS -->
           </div>
-          <div>
-            <label class="block font-semibold mb-1">Region</label>
-            <select id="region" class="w-full border px-4 py-2 rounded" required>
-              <option value="">Select region</option>
-              <option value="Ericeira">Ericeira (Portugal)</option>
-              <option value="Torquay">Torquay (Australia)</option>
-            </select>
-          </div>
         </div>
 
-        <div class="mt-6">
-          <label class="block font-semibold mb-2">Update Preference</label>
-          <label class="inline-flex items-center mr-4">
-            <input type="checkbox" id="daily" class="mr-2" /> Daily Updates
-          </label>
-          <label class="inline-flex items-center">
-            <input type="checkbox" id="weekly" class="mr-2" /> Weekly Update (Sundays)
-          </label>
-        </div>
-
-        <div class="mt-10 border-t pt-6">
-          <h2 class="text-2xl font-bold mb-4">Weekly Surf Availability</h2>
-          <p class="mb-4 text-sm text-gray-600">Choose when you are available to surf each day (2-hour daytime slots).</p>
-          <div id="availability" class="space-y-6"></div>
-        </div>
-
-        <div class="mt-10 text-center">
-          <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-            Save Profile
-          </button>
-        </div>
+        <button
+          type="submit"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded font-semibold"
+        >
+          Save Profile
+        </button>
       </form>
-    </div>
+    </main>
 
     <script>
-      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-      const slots = ["6am-8am", "8am-10am", "10am-12pm", "12pm-2pm", "2pm-4pm", "4pm-6pm"];
-      const container = document.getElementById("availability");
-
-      days.forEach(day => {
-        const wrapper = document.createElement("div");
-        wrapper.innerHTML = `
-          <label class="font-semibold block mb-1">${day}</label>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-            ${slots.map(slot => `
-              <label class="inline-flex items-center">
-                <input type="checkbox" value="${day}-${slot}" class="availability-slot mr-2" />
-                ${slot}
-              </label>
-            `).join('')}
-          </div>
-        `;
-        container.appendChild(wrapper);
+      const msalInstance = new msal.PublicClientApplication({
+        auth: {
+          clientId: "315eede8-ee31-4487-b202-81e495e8f9fe",
+          authority: "https://login.microsoftonline.com/common",
+          redirectUri: window.location.origin + "/profile.html",
+        },
       });
+
+      function renderAuthButtons() {
+        const account = msalInstance.getAllAccounts()[0];
+        const container = document.getElementById("auth-buttons");
+        container.innerHTML = "";
+
+        if (account) {
+          const logoutBtn = document.createElement("button");
+          logoutBtn.textContent = "Logout";
+          logoutBtn.className = "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded";
+          logoutBtn.onclick = () => msalInstance.logoutRedirect();
+          container.appendChild(logoutBtn);
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", renderAuthButtons);
     </script>
   </body>
 </html>
