@@ -1,11 +1,11 @@
 const msalConfig = {
   auth: {
-    clientId: "22bcfaaf-5091-464e-8064-ec06eea8a37c0", // Your App Registration Client ID
-    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480", // Your Tenant ID (Default Directory)
-    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net" // Your deployed frontend URL
+    clientId: "22bcfaaf-5091-464e-8064-ec06eea8a37c0",
+    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480", // Your tenant
+    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
   },
   cache: {
-    cacheLocation: "localStorage", // Recommended for single-page apps
+    cacheLocation: "localStorage",
     storeAuthStateInCookie: false,
   },
 };
