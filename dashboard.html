@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Dashboard - CoreLord</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+  <nav class="bg-gray-900 text-white p-4 flex justify-between items-center">
+    <h1 class="text-2xl font-bold">CoreLord</h1>
+    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">Logout</button>
+  </nav>
+
+  <main class="max-w-4xl mx-auto mt-10 bg-white shadow-md rounded-lg p-6">
+    <h2 class="text-2xl font-semibold mb-4">Welcome back, surfer! 🏄</h2>
+
+    <div id="userProfile" class="space-y-4">
+      <div>
+        <h3 class="font-medium text-gray-700">Preferred Surf Break</h3>
+        <p id="preferredBreak" class="text-lg"></p>
+      </div>
+
+      <div>
+        <h3 class="font-medium text-gray-700">Weekly Availability</h3>
+        <ul id="availabilityList" class="list-disc pl-6"></ul>
+      </div>
+
+      <div class="mt-6">
+        <a href="/profile.html" class="text-blue-600 hover:underline">Edit Profile</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="/scripts/user.js"></script>
+</body>
+</html>
