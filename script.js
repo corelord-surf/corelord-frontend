@@ -1,11 +1,11 @@
 const msalConfig = {
   auth: {
-    clientId: "22bcfaaf-5091-464e-8064-ec06eea8a37c0",
-    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
-    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
+    clientId: "22bcfaaf-5091-464e-8064-ec06eea8a37c0", // Your App Registration Client ID
+    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480", // Your Tenant ID (Default Directory)
+    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net" // Your deployed frontend URL
   },
   cache: {
-    cacheLocation: "localStorage",
+    cacheLocation: "localStorage", // Recommended for single-page apps
     storeAuthStateInCookie: false,
   },
 };
@@ -18,8 +18,10 @@ async function signIn() {
       scopes: ["openid", "profile", "email"],
     });
     console.log("Logged in as:", loginResponse.account.username);
+    alert(`Signed in as: ${loginResponse.account.username}`);
   } catch (err) {
-    console.error("Login error:", err);
+    console.error("Sign-in error:", err);
+    alert("Sign-in failed. See console for details.");
   }
 }
 
@@ -45,5 +47,5 @@ document.getElementById('surfForm').addEventListener('submit', async function(e)
   });
 
   const data = await response.json();
-  document.getElementById('result').innerText = data.plan || data.error;
+  document.getElementById('result').innerText = data.plan || data.error || "No response from server.";
 });
