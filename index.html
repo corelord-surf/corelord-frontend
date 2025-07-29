@@ -6,10 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Corelord Surf Planner</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>🌊 Corelord Surf Planner</h1>
+    <button onclick="signIn()">Sign In</button>
+    <button onclick="signOut()">Sign Out</button>
     <form id="surfForm">
       <label for="surfBreak">Surf Break:</label>
       <input type="text" id="surfBreak" name="surfBreak" required />
