@@ -53,7 +53,7 @@ async function signIn() {
 }
 
 function signUp() {
-  // Optional: route to a dedicated registration page if using custom policies (B2C)
+  // You can redirect to a sign-up policy if needed
   signIn();
 }
 
@@ -72,4 +72,20 @@ function renderAuthButtons() {
       msalInstance.logoutRedirect();
     };
     container.appendChild(logoutBtn);
+  } else {
+    const loginBtn = document.createElement("button");
+    loginBtn.textContent = "Login";
+    loginBtn.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2";
+    loginBtn.onclick = signIn;
+
+    const signUpBtn = document.createElement("button");
+    signUpBtn.textContent = "Sign Up";
+    signUpBtn.className = "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded";
+    signUpBtn.onclick = signUp;
+
+    container.appendChild(loginBtn);
+    container.appendChild(signUpBtn);
   }
+}
+
+window.addEventListener("DOMContentLoaded", renderAuthButtons);
