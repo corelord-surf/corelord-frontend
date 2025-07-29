@@ -17,7 +17,19 @@ if (window.msal) {
   console.error("MSAL is not loaded. Make sure to include the MSAL script in your HTML.");
 }
 
-// Sign in and redirect to the correct page
+// Redirect already-logged-in users from index.html to dashboard.html
+window.addEventListener("DOMContentLoaded", () => {
+  const currentPage = window.location.pathname;
+  const token = sessionStorage.getItem("authToken");
+
+  if (token && currentPage.endsWith("index.html")) {
+    window.location.href = "dashboard.html";
+  }
+
+  renderAuthButtons();
+});
+
+// Sign in and redirect to profile setup or dashboard
 async function signIn() {
   try {
     const loginResponse = await msalInstance.loginPopup({
@@ -45,7 +57,7 @@ async function signIn() {
     if (res.status === 404) {
       window.location.href = "profile.html";
     } else if (res.ok) {
-      window.location.href = "surf.html";
+      window.location.href = "dashboard.html";
     } else {
       console.error("Unexpected profile response:", res.status);
       alert("Something went wrong while checking your profile.");
@@ -65,6 +77,8 @@ function signUp() {
 function renderAuthButtons() {
   const account = msalInstance.getAllAccounts()[0];
   const container = document.getElementById("auth-buttons");
+  if (!container) return;
+
   container.innerHTML = "";
 
   if (account) {
@@ -90,5 +104,3 @@ function renderAuthButtons() {
     container.appendChild(signUpBtn);
   }
 }
-
-window.addEventListener("DOMContentLoaded", renderAuthButtons);
