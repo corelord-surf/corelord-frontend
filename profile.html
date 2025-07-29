@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Profile Setup - CoreLord</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="profile.js"></script>
   </head>
   <body class="bg-sky-50 text-gray-800">
     <div class="max-w-3xl mx-auto py-10 px-6">
@@ -13,19 +14,19 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label class="block font-semibold mb-1">Name</label>
-            <input type="text" class="w-full border px-4 py-2 rounded" required />
+            <input type="text" name="name" class="w-full border px-4 py-2 rounded" required />
           </div>
           <div>
             <label class="block font-semibold mb-1">Email</label>
-            <input type="email" class="w-full border px-4 py-2 rounded" required />
+            <input type="email" name="email" class="w-full border px-4 py-2 rounded" required />
           </div>
           <div>
             <label class="block font-semibold mb-1">Phone Number</label>
-            <input type="tel" class="w-full border px-4 py-2 rounded" placeholder="+61..." />
+            <input type="tel" name="phone" class="w-full border px-4 py-2 rounded" placeholder="+61..." />
           </div>
           <div>
             <label class="block font-semibold mb-1">Region</label>
-            <select class="w-full border px-4 py-2 rounded" required>
+            <select name="region" class="w-full border px-4 py-2 rounded" required>
               <option value="">Select region</option>
               <option value="ericeira">Ericeira (Portugal)</option>
               <option value="torquay">Torquay (Australia)</option>
@@ -46,9 +47,7 @@
         <div class="mt-10 border-t pt-6">
           <h2 class="text-2xl font-bold mb-4">Weekly Surf Availability</h2>
           <p class="mb-4 text-sm text-gray-600">Choose when you are available to surf each day (2-hour daytime slots).</p>
-          <div id="availability" class="space-y-6">
-            <!-- Days of the week dynamically inserted by JS -->
-          </div>
+          <div id="availability" class="space-y-6"></div>
         </div>
 
         <div class="mt-10 text-center">
@@ -71,7 +70,7 @@
           <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
             ${slots.map(slot => `
               <label class="inline-flex items-center">
-                <input type="checkbox" name="${day}-${slot}" class="mr-2" />
+                <input type="checkbox" name="availability" value="${day}-${slot}" class="mr-2" />
                 ${slot}
               </label>
             `).join('')}
