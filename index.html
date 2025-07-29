@@ -5,9 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CoreLord - Surf Forecasting Reimagined</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ✅ Add MSAL library -->
     <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
-    <script defer src="script.js"></script>
+    <script>
+      const msalConfig = {
+        auth: {
+          clientId: "825d8657-c509-42b6-9107-dd5e39268723",
+          authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
+          redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
+        },
+        cache: {
+          cacheLocation: "localStorage",
+          storeAuthStateInCookie: false,
+        },
+      };
+
+      const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+      async function signIn() {
+        try {
+          const loginResponse = await msalInstance.loginPopup({
+            scopes: ["openid", "profile", "email"],
+          });
+
+          console.log("Logged in as:", loginResponse.account.username);
+
+          const account = loginResponse.account;
+          const tokenResponse = await msalInstance.acquireTokenSilent({
+            scopes: ["openid", "profile", "email"],
+            account,
+          });
+
+          const token = tokenResponse.accessToken;
+          sessionStorage.setItem("authToken", token);
+
+          const res = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
+            headers: {
+              "Authorization": `Bearer ${token}`
+            }
+          });
+
+          if (res.status === 404) {
+            window.location.href = "profile.html";
+          } else {
+            window.location.href = "surf.html";
+          }
+        } catch (err) {
+          console.error("Sign-in error:", err);
+          alert("Sign-in failed. See console for details.");
+        }
+      }
+
+      function signUp() {
+        signIn(); // You can customise this later if sign-up is separate
+      }
+    </script>
   </head>
   <body class="bg-white text-gray-800">
     <header class="flex justify-between items-center p-6 bg-gray-900 text-white">
