@@ -1,33 +1,49 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Corelord Surf Planner</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
-</head>
-<body>
-  <div class="container">
-    <h1>🌊 Corelord Surf Planner</h1>
-    <button onclick="signIn()">Sign In</button>
-    <button onclick="signOut()">Sign Out</button>
-    <form id="surfForm">
-      <label for="surfBreak">Surf Break:</label>
-      <input type="text" id="surfBreak" name="surfBreak" required />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CoreLord - Surf Forecasting Reimagined</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="script.js"></script>
+  </head>
+  <body class="bg-white text-gray-800">
+    <header class="flex justify-between items-center p-6 bg-gray-900 text-white">
+      <h1 class="text-2xl font-bold">CoreLord</h1>
+      <div>
+        <button
+          onclick="signIn()"
+          class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2"
+        >
+          Login
+        </button>
+        <button
+          onclick="signOut()"
+          class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded"
+        >
+          Logout
+        </button>
+      </div>
+    </header>
 
-      <label for="availability">Availability (comma-separated):</label>
-      <input type="text" id="availability" name="availability" placeholder="e.g. Monday AM, Wednesday PM" required />
-
-      <label for="conditions">Preferred Conditions:</label>
-      <input type="text" id="conditions" name="conditions" placeholder="e.g. light offshore wind, 3-5ft swell" required />
-
-      <button type="submit">Get Surf Plan</button>
-    </form>
-    <div id="result"></div>
-  </div>
-
-  <script src="script.js"></script>
-</body>
+    <section class="text-center py-20 px-4">
+      <h2 class="text-4xl font-bold mb-4">The next revolution in surf planning</h2>
+      <p class="text-xl max-w-2xl mx-auto mb-8">
+        AI-backed surf forecasting built for those who live for the swell. Plan
+        your week, lock in your breaks, and surf smarter.
+      </p>
+      <div class="flex flex-col lg:flex-row justify-center gap-8">
+        <img
+          src="src/assets/ericeira.jpg"
+          alt="Ericeira"
+          class="w-full max-w-md rounded-lg shadow-lg"
+        />
+        <img
+          src="src/assets/torquay.jpg"
+          alt="Torquay"
+          class="w-full max-w-md rounded-lg shadow-lg"
+        />
+      </div>
+    </section>
+  </body>
 </html>
