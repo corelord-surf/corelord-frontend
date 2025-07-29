@@ -7,44 +7,71 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="script.js"></script>
   </head>
-  <body class="bg-white text-gray-800">
+  <body class="bg-gradient-to-b from-blue-50 via-cyan-100 to-white text-gray-800 font-sans">
     <!-- Header -->
-    <header class="flex justify-between items-center p-6 bg-gray-900 text-white">
-      <h1 class="text-2xl font-bold">CoreLord</h1>
-      <div>
-        <button
-          onclick="signIn()"
-          class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2"
-        >
-          Login
-        </button>
-        <button
-          onclick="signOut()"
-          class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded"
-        >
-          Logout
-        </button>
+    <header class="bg-gradient-to-r from-sky-900 to-cyan-700 text-white shadow-lg">
+      <div class="container mx-auto flex justify-between items-center px-6 py-4">
+        <h1 class="text-3xl font-extrabold tracking-tight">CoreLord</h1>
+        <div>
+          <button
+            onclick="signIn()"
+            class="bg-white text-sky-900 font-semibold px-4 py-2 rounded-lg shadow hover:bg-gray-100 transition"
+          >
+            Login
+          </button>
+          <button
+            onclick="signUp()"
+            class="ml-2 bg-white text-cyan-700 font-semibold px-4 py-2 rounded-lg shadow hover:bg-gray-100 transition"
+          >
+            Sign Up
+          </button>
+        </div>
       </div>
     </header>
 
     <!-- Hero Section -->
-    <section class="text-center py-20 px-4">
-      <h2 class="text-4xl font-bold mb-4">The next revolution in surf planning</h2>
-      <p class="text-xl max-w-2xl mx-auto mb-8">
+    <section class="text-center py-16 px-6">
+      <h2 class="text-5xl font-extrabold text-gray-900 mb-4">
+        The next revolution in surf planning
+      </h2>
+      <p class="text-xl max-w-2xl mx-auto text-gray-700">
         AI-backed surf forecasting built for those who live for the swell.
         Plan your week, lock in your breaks, and surf smarter.
       </p>
-      <div class="flex flex-col lg:flex-row justify-center gap-8">
-        <img
-          src="assets/images/ribeira.png"
-          alt="Ribeira d'Ilhas, Ericeira"
-          class="w-full max-w-md rounded-lg shadow-lg"
-        />
-        <img
-          src="assets/images/bells.png"
-          alt="Bells Beach, Torquay"
-          class="w-full max-w-md rounded-lg shadow-lg"
-        />
+    </section>
+
+    <!-- Locations Section -->
+    <section class="max-w-6xl mx-auto px-6 pb-16">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <!-- Ericeira -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <img
+            src="assets/images/ribeira.png"
+            alt="Ericeira"
+            class="w-full h-64 object-cover"
+          />
+          <div class="p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-2">Ericeira, Portugal</h3>
+            <p class="text-gray-600">
+              Currently supported as part of our beta program. Explore 25+ world-class breaks from Coxos to Ribeira.
+            </p>
+          </div>
+        </div>
+
+        <!-- Torquay -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <img
+            src="assets/images/bells.png"
+            alt="Torquay"
+            class="w-full h-64 object-cover"
+          />
+          <div class="p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-2">Torquay, Australia</h3>
+            <p class="text-gray-600">
+              Supported in beta with access to Bells Beach, Jan Juc, Winki Pop and more along Victoria's Surf Coast.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   </body>
