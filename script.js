@@ -1,25 +1,3 @@
-// MSAL Configuration
-const msalConfig = {
-  auth: {
-    clientId: "825d8657-c509-42b6-9107-dd5e39268723",
-    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
-    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
-  },
-  cache: {
-    cacheLocation: "localStorage",
-    storeAuthStateInCookie: false,
-  },
-};
-
-// Ensure MSAL is available (loaded via <script> tag in index.html)
-let msalInstance;
-if (window.msal) {
-  msalInstance = new msal.PublicClientApplication(msalConfig);
-} else {
-  console.error("MSAL is not loaded. Make sure to include the MSAL script in your HTML.");
-}
-
-// Sign In - redirect to profile setup
 async function signIn() {
   try {
     const loginResponse = await msalInstance.loginPopup({
@@ -28,46 +6,29 @@ async function signIn() {
 
     console.log("Logged in as:", loginResponse.account.username);
 
-    // Redirect to profile setup page
-    window.location.href = "profile.html";
+    const account = loginResponse.account;
+    const tokenResponse = await msalInstance.acquireTokenSilent({
+      scopes: ["openid", "profile", "email"],
+      account,
+    });
+
+    const token = tokenResponse.accessToken;
+    sessionStorage.setItem("authToken", token);
+
+    // Check if profile exists
+    const res = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (res.status === 404) {
+      window.location.href = "profile.html";
+    } else {
+      window.location.href = "surf.html"; // Next screen
+    }
   } catch (err) {
     console.error("Sign-in error:", err);
     alert("Sign-in failed. See console for details.");
   }
 }
-
-// Placeholder Sign Up (prevents button error)
-function signUp() {
-  alert("Sign-up flow coming soon!");
-}
-
-// Surf Planner Form Submission
-document.addEventListener("DOMContentLoaded", () => {
-  const surfForm = document.getElementById("surfForm");
-
-  if (surfForm) {
-    surfForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      const surfBreak = document.getElementById("surfBreak").value;
-      const availability = document
-        .getElementById("availability")
-        .value.split(",")
-        .map((day) => day.trim());
-      const conditions = document.getElementById("conditions").value;
-
-      const response = await fetch(
-        "https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/surfplan",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ break: surfBreak, availability, conditions }),
-        }
-      );
-
-      const data = await response.json();
-      document.getElementById("result").innerText =
-        data.plan || data.error || "No response from server.";
-    });
-  }
-});
