@@ -1,9 +1,8 @@
-
 const msalConfig = {
   auth: {
-    clientId: "265ab3c8-c5b9-44c3-b3f0-b5c28764c8f", // Replace with your Client ID
-    authority: "https://corelord.b2clogin.com/corelord.onmicrosoft.com/B2C_1_signupsignin", // Replace with your tenant and policy
-    redirectUri: "https://agreeable-ground-04732bc03.2.azurestaticapps.net"
+    clientId: "22bcfaaf-5091-464e-8064-ec06eea8a37c0",
+    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
+    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
   },
   cache: {
     cacheLocation: "localStorage",
@@ -20,7 +19,7 @@ async function signIn() {
     });
     console.log("Logged in as:", loginResponse.account.username);
   } catch (err) {
-    console.error(err);
+    console.error("Login error:", err);
   }
 }
 
