@@ -3,28 +3,67 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Your Surf Planner | CoreLord</title>
+    <title>Surf Planner - CoreLord</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
     <script defer src="surf.js"></script>
   </head>
-  <body class="bg-gray-100 text-gray-900">
-    <header class="bg-gray-900 text-white p-4 flex justify-between items-center">
+  <body class="bg-gray-100 text-gray-800">
+    <header class="flex justify-between items-center p-6 bg-gray-900 text-white">
       <h1 class="text-2xl font-bold">CoreLord</h1>
-      <button onclick="window.location.href='profile.html'" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded">
-        Edit Profile
-      </button>
+      <div id="auth-buttons"></div>
     </header>
 
-    <main class="p-6 max-w-4xl mx-auto">
-      <section class="mb-10">
-        <h2 class="text-3xl font-bold mb-4">Welcome back 👋</h2>
-        <div id="profileInfo" class="bg-white shadow p-4 rounded text-sm"></div>
-      </section>
+    <main class="max-w-4xl mx-auto py-12 px-4">
+      <h2 class="text-3xl font-bold mb-6">Welcome back 👋</h2>
+      <div id="profileStatus" class="mb-6 text-red-600 font-semibold">
+        Couldn't load your profile.
+      </div>
 
-      <section>
-        <h2 class="text-2xl font-bold mb-4">Surf Forecasts</h2>
-        <div id="forecastContainer" class="grid md:grid-cols-2 gap-6"></div>
-      </section>
+      <h3 class="text-2xl font-semibold mb-4">Surf Forecasts</h3>
+      <div class="space-y-4">
+        <div class="p-4 bg-white rounded shadow">
+          <h4 class="text-xl font-bold">Ericeira, Portugal</h4>
+          <p><strong>Swell:</strong> 1.8m @ 12s</p>
+          <p><strong>Wind:</strong> Offshore 15km/h</p>
+          <p><strong>Rating:</strong> ⭐⭐⭐</p>
+          <p class="text-sm text-gray-600">Clean morning conditions, building swell into weekend.</p>
+        </div>
+
+        <div class="p-4 bg-white rounded shadow">
+          <h4 class="text-xl font-bold">Torquay, Australia</h4>
+          <p><strong>Swell:</strong> 2.1m @ 10s</p>
+          <p><strong>Wind:</strong> Onshore 20km/h</p>
+          <p><strong>Rating:</strong> ⭐⭐</p>
+          <p class="text-sm text-gray-600">Messy in the afternoon, early paddle recommended.</p>
+        </div>
+      </div>
     </main>
+
+    <script>
+      const msalInstance = new msal.PublicClientApplication({
+        auth: {
+          clientId: "315eede8-ee31-4487-b202-81e495e8f9fe",
+          authority: "https://login.microsoftonline.com/common",
+          redirectUri: window.location.origin + "/surf.html",
+        },
+      });
+
+      function renderAuthButtons() {
+        const account = msalInstance.getAllAccounts()[0];
+        const container = document.getElementById("auth-buttons");
+        container.innerHTML = "";
+
+        if (account) {
+          const logoutBtn = document.createElement("button");
+          logoutBtn.textContent = "Logout";
+          logoutBtn.className = "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded";
+          logoutBtn.onclick = () => msalInstance.logoutRedirect();
+          container.appendChild(logoutBtn);
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", renderAuthButtons);
+    </script>
   </body>
 </html>
