@@ -1,6 +1,6 @@
 const msalConfig = {
   auth: {
-    clientId: "22bcfaaf-5091-464e-8064-ec06eea8a37c0",
+    clientId: "825d8657-c509-42b6-9107-dd5e39268723",
     authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480", // Your tenant
     redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
   },
