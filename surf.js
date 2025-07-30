@@ -16,19 +16,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderAuthButtons();
 
   const account = msalInstance.getAllAccounts()[0];
-  const token = sessionStorage.getItem("authToken");
-
-  if (!account || !token) {
+  if (!account) {
     alert("You must be signed in to view this page.");
     window.location.href = "index.html";
     return;
   }
 
   try {
+    const tokenResponse = await msalInstance.acquireTokenSilent({
+      scopes: ["openid", "profile", "email", "api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"],
+      account,
+    });
+
+    const token = tokenResponse.accessToken;
+    sessionStorage.setItem("authToken", token);
+
     const res = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
       headers: {
         Authorization: `Bearer ${token}`
-      },
+      }
     });
 
     if (!res.ok) throw new Error("Failed to fetch profile");
