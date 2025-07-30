@@ -2,105 +2,65 @@ const msalConfig = {
   auth: {
     clientId: "825d8657-c509-42b6-9107-dd5e39268723",
     authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
-    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
-  },
-  cache: {
-    cacheLocation: "localStorage",
-    storeAuthStateInCookie: false,
+    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net",
   },
 };
+const msalInstance = new msal.PublicClientApplication(msalConfig);
+let account;
 
-let msalInstance;
-if (window.msal) {
-  msalInstance = new msal.PublicClientApplication(msalConfig);
-} else {
-  console.error("MSAL is not loaded. Make sure to include the MSAL script in your HTML.");
-}
-
-// Redirect already-logged-in users from index.html to dashboard.html
-window.addEventListener("DOMContentLoaded", () => {
-  const currentPage = window.location.pathname;
-  const token = sessionStorage.getItem("authToken");
-
-  if (token && currentPage.endsWith("index.html")) {
-    window.location.href = "dashboard.html";
-  }
-
-  renderAuthButtons();
-});
-
-// Sign in and redirect to profile setup or dashboard
 async function signIn() {
   try {
-    const loginResponse = await msalInstance.loginPopup({
-      scopes: ["openid", "profile", "email"],
-    });
-
-    console.log("Logged in as:", loginResponse.account.username);
-
-    const account = loginResponse.account;
-    const tokenResponse = await msalInstance.acquireTokenSilent({
-      scopes: ["openid", "profile", "email"],
-      account,
-    });
-
-    const token = tokenResponse.accessToken;
-    sessionStorage.setItem("authToken", token);
-
-    // Check if profile exists
-    const res = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    if (res.status === 404) {
-      window.location.href = "profile.html";
-    } else if (res.ok) {
-      window.location.href = "dashboard.html";
-    } else {
-      console.error("Unexpected profile response:", res.status);
-      alert("Something went wrong while checking your profile.");
-    }
+    const result = await msalInstance.loginPopup({ scopes: ["openid", "profile", "email"] });
+    account = result.account;
+    localStorage.setItem("corelord_token", result.idToken);
+    document.getElementById("auth-buttons").innerHTML = `<button onclick="logout()" class="bg-red-600 px-4 py-2 rounded text-white">Logout</button>`;
+    checkProfileAndRedirect();
   } catch (err) {
-    console.error("Sign-in error:", err);
+    console.error("❌ Sign-in error:", err);
     alert("Sign-in failed. See console for details.");
   }
 }
 
-// Optional: Stub for future SignUp handling
-function signUp() {
-  signIn(); // For now, Sign Up just behaves like Sign In
+function logout() {
+  msalInstance.logoutPopup();
+  localStorage.removeItem("corelord_token");
+  window.location.href = "/";
 }
 
-// Render login/logout buttons dynamically
-function renderAuthButtons() {
-  const account = msalInstance.getAllAccounts()[0];
-  const container = document.getElementById("auth-buttons");
-  if (!container) return;
+function getToken() {
+  return localStorage.getItem("corelord_token");
+}
 
-  container.innerHTML = "";
+async function checkProfileAndRedirect() {
+  try {
+    const response = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
+      headers: {
+        Authorization: `Bearer ${getToken()}`
+      },
+      credentials: "include"
+    });
 
-  if (account) {
-    const logoutBtn = document.createElement("button");
-    logoutBtn.textContent = "Logout";
-    logoutBtn.className = "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded";
-    logoutBtn.onclick = () => {
-      msalInstance.logoutRedirect();
-    };
-    container.appendChild(logoutBtn);
-  } else {
-    const loginBtn = document.createElement("button");
-    loginBtn.textContent = "Login";
-    loginBtn.className = "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2";
-    loginBtn.onclick = () => signIn();
-
-    const signUpBtn = document.createElement("button");
-    signUpBtn.textContent = "Sign Up";
-    signUpBtn.className = "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded";
-    signUpBtn.onclick = () => signUp();
-
-    container.appendChild(loginBtn);
-    container.appendChild(signUpBtn);
+    if (response.status === 404) {
+      window.location.href = "/profile.html";
+    } else if (response.ok) {
+      window.location.href = "/dashboard.html";
+    } else {
+      console.warn("⚠️ Unknown response from /api/profile");
+    }
+  } catch (err) {
+    console.error("Profile check error:", err);
   }
 }
+
+window.addEventListener("DOMContentLoaded", () => {
+  const currentAccounts = msalInstance.getAllAccounts();
+  if (currentAccounts.length > 0) {
+    account = currentAccounts[0];
+    document.getElementById("auth-buttons").innerHTML = `<button onclick="logout()" class="bg-red-600 px-4 py-2 rounded text-white">Logout</button>`;
+    if (window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {
+      checkProfileAndRedirect();
+    }
+  } else {
+    document.getElementById("auth-buttons").innerHTML = `<button onclick="signIn()" class="bg-blue-600 px-4 py-2 rounded text-white">Sign In</button>`;
+  }
+});
