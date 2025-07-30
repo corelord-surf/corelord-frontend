@@ -12,17 +12,11 @@ document.getElementById("profileForm").addEventListener("submit", async (e) => {
     .map(cb => cb.value);
 
   const profile = {
-    displayName,
-    favouriteBreaks: [region],
-    availability,
-    conditions: {
-      wind: "offshore",        // Default for now
-      waveHeight: "3-6ft"      // Default for now
-    },
-    preferences: {
-      daily,
-      weekly
-    }
+    name: displayName,
+    region,
+    phone: "", // optional, placeholder
+    updates: [],
+    availability
   };
 
   const res = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
@@ -36,7 +30,7 @@ document.getElementById("profileForm").addEventListener("submit", async (e) => {
 
   if (res.ok) {
     alert("Profile saved!");
-    window.location.href = "surf.html"; // you'll make this next
+    window.location.href = "surf.html";
   } else {
     alert("Error saving profile");
   }
