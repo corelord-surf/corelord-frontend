@@ -16,26 +16,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderAuthButtons();
 
   const account = msalInstance.getAllAccounts()[0];
-  if (!account) {
+  const token = sessionStorage.getItem("authToken");
+
+  if (!account || !token) {
     alert("You must be signed in to view this page.");
     window.location.href = "index.html";
     return;
   }
 
   try {
-    const tokenResponse = await msalInstance.acquireTokenSilent({
-      scopes: ["openid", "profile", "email"],
-      account,
+    const res = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
     });
 
-    const token = tokenResponse.accessToken;
-    sessionStorage.setItem("authToken", token);
+    if (!res.ok) throw new Error("Failed to fetch profile");
 
-    const profileRes = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const profile = await profileRes.json();
+    const profile = await res.json();
     renderProfile(profile);
 
     const forecasts = [
@@ -58,21 +56,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   } catch (err) {
     console.error("Token/profile fetch error:", err);
-    alert("Session expired. Please log in again.");
+    alert("Session expired or invalid. Please log in again.");
     window.location.href = "index.html";
   }
 });
 
 function renderProfile(profile) {
   const info = document.getElementById("profileInfo");
-  const favBreaks = profile.breaks?.join(", ") || "None selected";
-  const times = Object.entries(profile.availability || {})
-    .map(([day, slots]) => `${day}: ${slots.join(", ")}`)
-    .join("<br>");
+
+  const breaks = profile.region || "Not set";
+  const availability = JSON.parse(profile.availability || "[]");
+
+  const availabilityFormatted = availability.length
+    ? availability.join(", ")
+    : "No days selected";
 
   info.innerHTML = `
-    <p><strong>Favourite Breaks:</strong> ${favBreaks}</p>
-    <p class="mt-2"><strong>Your Weekly Availability:</strong><br>${times}</p>
+    <p><strong>Favourite Break:</strong> ${breaks}</p>
+    <p class="mt-2"><strong>Weekly Availability:</strong> ${availabilityFormatted}</p>
   `;
 }
 
@@ -94,15 +95,19 @@ function renderForecasts(forecasts) {
 }
 
 function renderAuthButtons() {
-  const account = msalInstance.getAllAccounts()[0];
   const container = document.getElementById("auth-buttons");
   container.innerHTML = "";
 
-  if (account) {
-    const logoutBtn = document.createElement("button");
-    logoutBtn.textContent = "Logout";
-    logoutBtn.className = "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded";
-    logoutBtn.onclick = () => msalInstance.logoutRedirect();
-    container.appendChild(logoutBtn);
-  }
+  const logoutBtn = document.createElement("button");
+  logoutBtn.textContent = "Logout";
+  logoutBtn.className = "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded";
+  logoutBtn.onclick = () => {
+    msalInstance.logoutPopup().then(() => {
+      sessionStorage.clear();
+      localStorage.removeItem("corelord_token");
+      window.location.href = "/";
+    });
+  };
+
+  container.appendChild(logoutBtn);
 }
