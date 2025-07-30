@@ -5,15 +5,24 @@ const msalConfig = {
     redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net",
   },
 };
+
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 let account;
 
 async function signIn() {
   try {
-    const result = await msalInstance.loginPopup({ scopes: ["openid", "profile", "email"] });
+    const result = await msalInstance.loginPopup({
+      scopes: ["openid", "profile", "email"]
+    });
+
     account = result.account;
+
+    // Store token and email
     localStorage.setItem("corelord_token", result.idToken);
-    document.getElementById("auth-buttons").innerHTML = `<button onclick="logout()" class="bg-red-600 px-4 py-2 rounded text-white">Logout</button>`;
+    sessionStorage.setItem("authToken", result.idToken);
+    sessionStorage.setItem("userEmail", account.username);
+
+    renderAuthButton(true);
     checkProfileAndRedirect();
   } catch (err) {
     console.error("❌ Sign-in error:", err);
@@ -22,9 +31,11 @@ async function signIn() {
 }
 
 function logout() {
-  msalInstance.logoutPopup();
-  localStorage.removeItem("corelord_token");
-  window.location.href = "/";
+  msalInstance.logoutPopup().then(() => {
+    localStorage.removeItem("corelord_token");
+    sessionStorage.clear();
+    window.location.href = "/";
+  });
 }
 
 function getToken() {
@@ -52,15 +63,38 @@ async function checkProfileAndRedirect() {
   }
 }
 
+function renderAuthButton(isSignedIn) {
+  const container = document.getElementById("auth-buttons");
+  container.innerHTML = "";
+
+  const btn = document.createElement("button");
+  btn.className = "px-4 py-2 rounded text-white";
+
+  if (isSignedIn) {
+    btn.textContent = "Logout";
+    btn.classList.add("bg-red-600");
+    btn.onclick = logout;
+  } else {
+    btn.textContent = "Sign In";
+    btn.classList.add("bg-blue-600");
+    btn.onclick = signIn;
+  }
+
+  container.appendChild(btn);
+}
+
 window.addEventListener("DOMContentLoaded", () => {
   const currentAccounts = msalInstance.getAllAccounts();
-  if (currentAccounts.length > 0) {
+  const token = getToken();
+
+  if (currentAccounts.length > 0 && token) {
     account = currentAccounts[0];
-    document.getElementById("auth-buttons").innerHTML = `<button onclick="logout()" class="bg-red-600 px-4 py-2 rounded text-white">Logout</button>`;
+    renderAuthButton(true);
+
     if (window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {
       checkProfileAndRedirect();
     }
   } else {
-    document.getElementById("auth-buttons").innerHTML = `<button onclick="signIn()" class="bg-blue-600 px-4 py-2 rounded text-white">Sign In</button>`;
+    renderAuthButton(false);
   }
 });
