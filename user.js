@@ -17,9 +17,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const profile = await response.json();
 
-    document.getElementById('userEmail').textContent = sessionStorage.getItem('userEmail');
-    document.getElementById('surfBreak').textContent = profile.surfBreak || 'Not set';
-    document.getElementById('availability').textContent = (profile.weeklyAvailability || []).join(', ') || 'Not set';
+    document.getElementById('userEmail').textContent = sessionStorage.getItem('userEmail') || profile.email;
+    document.getElementById('surfBreak').textContent = profile.region || 'Not set';
+    document.getElementById('availability').textContent = (profile.availability || []).join(', ') || 'Not set';
 
   } catch (err) {
     console.error('Error loading profile:', err);
