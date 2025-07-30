@@ -1,5 +1,5 @@
 function getToken() {
-  return localStorage.getItem("corelord_token");
+  return sessionStorage.getItem("authToken");
 }
 
 function logout() {
@@ -14,8 +14,7 @@ async function loadProfile() {
       headers: {
         Authorization: `Bearer ${getToken()}`,
         "Content-Type": "application/json"
-      },
-      credentials: "include"
+      }
     });
 
     if (!response.ok) {
@@ -30,7 +29,7 @@ async function loadProfile() {
 
     // Weekly availability
     const availList = document.getElementById("availabilityList");
-    availList.innerHTML = ""; // Clear previous
+    availList.innerHTML = "";
     (profile.availability || []).forEach(day => {
       const li = document.createElement("li");
       li.textContent = day;
