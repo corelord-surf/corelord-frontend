@@ -12,8 +12,16 @@ const msalConfig = {
 
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 let account;
+let signInInProgress = false;
 
 async function signIn() {
+  if (signInInProgress) {
+    console.warn("🔄 Sign-in already in progress...");
+    return;
+  }
+
+  signInInProgress = true;
+
   try {
     const result = await msalInstance.loginPopup({
       scopes: [
@@ -34,11 +42,14 @@ async function signIn() {
   } catch (err) {
     console.error("❌ Sign-in error:", err);
     alert("Sign-in failed. See console for details.");
+  } finally {
+    signInInProgress = false;
   }
 }
 
 function logout() {
   msalInstance.logoutPopup().then(() => {
+    msalInstance.clearCache(); // Optional: clears stuck login state
     localStorage.removeItem("corelord_token");
     sessionStorage.clear();
     window.location.href = "/";
