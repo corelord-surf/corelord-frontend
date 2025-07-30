@@ -12,14 +12,19 @@ let account;
 async function signIn() {
   try {
     const result = await msalInstance.loginPopup({
-      scopes: ["openid", "profile", "email"]
+      scopes: [
+        "openid",
+        "profile",
+        "email",
+        "api://825d8657-c509-42b6-9107-dd5e39268723/access_as_user"
+      ]
     });
 
     account = result.account;
 
-    // Store token and email
-    localStorage.setItem("corelord_token", result.idToken);
-    sessionStorage.setItem("authToken", result.idToken);
+    // ✅ Store accessToken for API use
+    localStorage.setItem("corelord_token", result.accessToken);
+    sessionStorage.setItem("authToken", result.accessToken);
     sessionStorage.setItem("userEmail", account.username);
 
     renderAuthButton(true);
