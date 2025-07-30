@@ -2,8 +2,12 @@ const msalConfig = {
   auth: {
     clientId: "825d8657-c509-42b6-9107-dd5e39268723",
     authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
-    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net",
+    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
   },
+  cache: {
+    cacheLocation: "localStorage",
+    storeAuthStateInCookie: false
+  }
 };
 
 const msalInstance = new msal.PublicClientApplication(msalConfig);
@@ -11,26 +15,22 @@ let account;
 
 async function signIn() {
   try {
-    // First login to get an ID token and account
-    const loginResult = await msalInstance.loginPopup({
-      scopes: ["openid", "profile", "email"]
+    const result = await msalInstance.loginPopup({
+      scopes: [
+        "openid",
+        "profile",
+        "email",
+        "api://825d8657-c509-42b6-9107-dd5e39268723/access_as_user"
+      ]
     });
 
-    account = loginResult.account;
-
-    // Now acquire access token for API
-    const tokenResponse = await msalInstance.acquireTokenSilent({
-      scopes: ["api://825d8657-c509-42b6-9107-dd5e39268723/access_as_user"],
-      account: account
-    });
-
-    // Store access token and email
-    localStorage.setItem("corelord_token", tokenResponse.accessToken);
-    sessionStorage.setItem("authToken", tokenResponse.accessToken);
+    account = result.account;
+    localStorage.setItem("corelord_token", result.accessToken);
+    sessionStorage.setItem("authToken", result.accessToken);
     sessionStorage.setItem("userEmail", account.username);
 
     renderAuthButton(true);
-    checkProfileAndRedirect();
+    await checkProfileAndRedirect();  // 👈 ensure token is valid before continuing
   } catch (err) {
     console.error("❌ Sign-in error:", err);
     alert("Sign-in failed. See console for details.");
@@ -45,15 +45,41 @@ function logout() {
   });
 }
 
-function getToken() {
-  return localStorage.getItem("corelord_token");
+async function getToken() {
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length === 0) return null;
+
+  try {
+    const silentResult = await msalInstance.acquireTokenSilent({
+      scopes: [
+        "openid",
+        "profile",
+        "email",
+        "api://825d8657-c509-42b6-9107-dd5e39268723/access_as_user"
+      ],
+      account: accounts[0]
+    });
+
+    localStorage.setItem("corelord_token", silentResult.accessToken);
+    sessionStorage.setItem("authToken", silentResult.accessToken);
+    return silentResult.accessToken;
+  } catch (e) {
+    console.warn("🔒 Token silent acquisition failed:", e);
+    return null;
+  }
 }
 
 async function checkProfileAndRedirect() {
+  const token = await getToken();
+  if (!token) {
+    console.warn("⚠️ No token available");
+    return;
+  }
+
   try {
     const response = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
       headers: {
-        Authorization: `Bearer ${getToken()}`
+        Authorization: `Bearer ${token}`
       },
       credentials: "include"
     });
@@ -66,7 +92,7 @@ async function checkProfileAndRedirect() {
       console.warn("⚠️ Unknown response from /api/profile");
     }
   } catch (err) {
-    console.error("Profile check error:", err);
+    console.error("❌ Profile check error:", err);
   }
 }
 
@@ -90,16 +116,15 @@ function renderAuthButton(isSignedIn) {
   container.appendChild(btn);
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const currentAccounts = msalInstance.getAllAccounts();
-  const token = getToken();
+window.addEventListener("DOMContentLoaded", async () => {
+  const accounts = msalInstance.getAllAccounts();
 
-  if (currentAccounts.length > 0 && token) {
-    account = currentAccounts[0];
+  if (accounts.length > 0) {
+    account = accounts[0];
     renderAuthButton(true);
 
     if (window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {
-      checkProfileAndRedirect();
+      await checkProfileAndRedirect(); // 👈 ensure token is acquired before API call
     }
   } else {
     renderAuthButton(false);
