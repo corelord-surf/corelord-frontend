@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const token = sessionStorage.getItem('accessToken');
+  const token = sessionStorage.getItem('authToken');
   if (!token) {
     window.location.href = '/index.html';
     return;
