@@ -20,17 +20,19 @@ async function signIn() {
         "openid",
         "profile",
         "email",
-        "api://825d8657-c509-42b6-9107-dd5e39268723/access_as_user"
+        "api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"
       ]
     });
 
     account = result.account;
-    localStorage.setItem("corelord_token", result.accessToken);
-    sessionStorage.setItem("authToken", result.accessToken);
+    const token = result.accessToken;
+
+    localStorage.setItem("corelord_token", token);
+    sessionStorage.setItem("authToken", token);
     sessionStorage.setItem("userEmail", account.username);
 
     renderAuthButton(true);
-    await checkProfileAndRedirect();  // 👈 ensure token is valid before continuing
+    await checkProfileAndRedirect();
   } catch (err) {
     console.error("❌ Sign-in error:", err);
     alert("Sign-in failed. See console for details.");
@@ -50,19 +52,20 @@ async function getToken() {
   if (accounts.length === 0) return null;
 
   try {
-    const silentResult = await msalInstance.acquireTokenSilent({
+    const result = await msalInstance.acquireTokenSilent({
       scopes: [
         "openid",
         "profile",
         "email",
-        "api://825d8657-c509-42b6-9107-dd5e39268723/access_as_user"
+        "api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"
       ],
       account: accounts[0]
     });
 
-    localStorage.setItem("corelord_token", silentResult.accessToken);
-    sessionStorage.setItem("authToken", silentResult.accessToken);
-    return silentResult.accessToken;
+    const token = result.accessToken;
+    localStorage.setItem("corelord_token", token);
+    sessionStorage.setItem("authToken", token);
+    return token;
   } catch (e) {
     console.warn("🔒 Token silent acquisition failed:", e);
     return null;
@@ -71,25 +74,17 @@ async function getToken() {
 
 async function checkProfileAndRedirect() {
   const token = await getToken();
-  if (!token) {
-    console.warn("⚠️ No token available");
-    return;
-  }
+  if (!token) return;
 
   try {
-    const response = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      credentials: "include"
+    const res = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
+      headers: { Authorization: `Bearer ${token}` }
     });
 
-    if (response.status === 404) {
+    if (res.status === 404) {
       window.location.href = "/profile.html";
-    } else if (response.ok) {
+    } else if (res.ok) {
       window.location.href = "/dashboard.html";
-    } else {
-      console.warn("⚠️ Unknown response from /api/profile");
     }
   } catch (err) {
     console.error("❌ Profile check error:", err);
@@ -102,16 +97,9 @@ function renderAuthButton(isSignedIn) {
 
   const btn = document.createElement("button");
   btn.className = "px-4 py-2 rounded text-white";
-
-  if (isSignedIn) {
-    btn.textContent = "Logout";
-    btn.classList.add("bg-red-600");
-    btn.onclick = logout;
-  } else {
-    btn.textContent = "Sign In";
-    btn.classList.add("bg-blue-600");
-    btn.onclick = signIn;
-  }
+  btn.textContent = isSignedIn ? "Logout" : "Sign In";
+  btn.classList.add(isSignedIn ? "bg-red-600" : "bg-blue-600");
+  btn.onclick = isSignedIn ? logout : signIn;
 
   container.appendChild(btn);
 }
@@ -122,9 +110,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (accounts.length > 0) {
     account = accounts[0];
     renderAuthButton(true);
-
     if (window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {
-      await checkProfileAndRedirect(); // 👈 ensure token is acquired before API call
+      await checkProfileAndRedirect();
     }
   } else {
     renderAuthButton(false);
