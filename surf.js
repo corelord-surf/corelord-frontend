@@ -1,44 +1,66 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const token = sessionStorage.getItem("authToken");
+const msalConfig = {
+  auth: {
+    clientId: "825d8657-c509-42b6-9107-dd5e39268723",
+    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
+    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net/surf.html"
+  },
+  cache: {
+    cacheLocation: "localStorage",
+    storeAuthStateInCookie: false,
+  },
+};
 
-  if (!token) {
+const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+document.addEventListener("DOMContentLoaded", async () => {
+  renderAuthButtons();
+
+  const account = msalInstance.getAllAccounts()[0];
+  if (!account) {
     alert("You must be signed in to view this page.");
     window.location.href = "index.html";
     return;
   }
 
   try {
-    // Fetch and display saved profile
+    const tokenResponse = await msalInstance.acquireTokenSilent({
+      scopes: ["openid", "profile", "email"],
+      account,
+    });
+
+    const token = tokenResponse.accessToken;
+    sessionStorage.setItem("authToken", token);
+
     const profileRes = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
       headers: { Authorization: `Bearer ${token}` },
     });
 
     const profile = await profileRes.json();
     renderProfile(profile);
+
+    const forecasts = [
+      {
+        break: "Ericeira, Portugal",
+        swell: "1.8m @ 12s",
+        wind: "Offshore 15km/h",
+        rating: "⭐⭐⭐",
+        notes: "Clean morning conditions, building swell into weekend.",
+      },
+      {
+        break: "Torquay, Australia",
+        swell: "2.1m @ 10s",
+        wind: "Onshore 20km/h",
+        rating: "⭐⭐",
+        notes: "Messy in the afternoon, early paddle recommended.",
+      },
+    ];
+    renderForecasts(forecasts);
+
   } catch (err) {
-    console.error("Failed to load profile:", err);
-    document.getElementById("profileInfo").innerText = "Couldn't load your profile.";
+    console.error("Token/profile fetch error:", err);
+    alert("Session expired. Please log in again.");
+    window.location.href = "index.html";
   }
-
-  // Dummy forecast data
-  const forecasts = [
-    {
-      break: "Ericeira, Portugal",
-      swell: "1.8m @ 12s",
-      wind: "Offshore 15km/h",
-      rating: "⭐⭐⭐",
-      notes: "Clean morning conditions, building swell into weekend.",
-    },
-    {
-      break: "Torquay, Australia",
-      swell: "2.1m @ 10s",
-      wind: "Onshore 20km/h",
-      rating: "⭐⭐",
-      notes: "Messy in the afternoon, early paddle recommended.",
-    },
-  ];
-
-  renderForecasts(forecasts);
 });
 
 function renderProfile(profile) {
@@ -69,4 +91,18 @@ function renderForecasts(forecasts) {
     `;
     container.appendChild(card);
   });
+}
+
+function renderAuthButtons() {
+  const account = msalInstance.getAllAccounts()[0];
+  const container = document.getElementById("auth-buttons");
+  container.innerHTML = "";
+
+  if (account) {
+    const logoutBtn = document.createElement("button");
+    logoutBtn.textContent = "Logout";
+    logoutBtn.className = "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded";
+    logoutBtn.onclick = () => msalInstance.logoutRedirect();
+    container.appendChild(logoutBtn);
+  }
 }
