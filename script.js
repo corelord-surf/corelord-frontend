@@ -30,9 +30,9 @@ async function signIn() {
     localStorage.setItem("corelord_token", token);
     sessionStorage.setItem("authToken", token);
 
-    // Call backend to see if profile exists
+    // Check if user profile exists
     const response = await fetch("https://corelord-app.azurewebsites.net/api/profile", {
-
+      headers: {
         Authorization: `Bearer ${token}`
       }
     });
