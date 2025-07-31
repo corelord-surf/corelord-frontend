@@ -33,8 +33,16 @@ async function signIn() {
     });
 
     account = result.account;
-    localStorage.setItem("corelord_token", result.accessToken);
-    sessionStorage.setItem("authToken", result.accessToken);
+    msalInstance.setActiveAccount(account);
+
+    const tokenResponse = await msalInstance.acquireTokenSilent({
+      scopes: ["api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"],
+      account
+    });
+
+    const token = tokenResponse.accessToken;
+    localStorage.setItem("corelord_token", token);
+    sessionStorage.setItem("authToken", token);
     sessionStorage.setItem("userEmail", account.username);
 
     renderAuthButton(true);
@@ -49,7 +57,7 @@ async function signIn() {
 
 function logout() {
   msalInstance.logoutPopup().then(() => {
-    msalInstance.clearCache(); // Optional: clears stuck login state
+    msalInstance.clearCache();
     localStorage.removeItem("corelord_token");
     sessionStorage.clear();
     window.location.href = "/";
@@ -62,18 +70,14 @@ async function getToken() {
 
   try {
     const silentResult = await msalInstance.acquireTokenSilent({
-      scopes: [
-        "openid",
-        "profile",
-        "email",
-        "api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"
-      ],
+      scopes: ["api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"],
       account: accounts[0]
     });
 
-    localStorage.setItem("corelord_token", silentResult.accessToken);
-    sessionStorage.setItem("authToken", silentResult.accessToken);
-    return silentResult.accessToken;
+    const token = silentResult.accessToken;
+    localStorage.setItem("corelord_token", token);
+    sessionStorage.setItem("authToken", token);
+    return token;
   } catch (e) {
     console.warn("🔒 Token silent acquisition failed:", e);
     return null;
