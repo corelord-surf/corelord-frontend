@@ -1,7 +1,7 @@
 const msalConfig = {
   auth: {
-    clientId: "825d8657-c509-42b6-9107-dd5e39268723", // frontend app
-    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480", // tenant
+    clientId: "825d8657-c509-42b6-9107-dd5e39268723", // frontend app client ID
+    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480", // tenant ID
     redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net" // static frontend
   },
   cache: {
@@ -20,18 +20,20 @@ async function signIn() {
         "openid",
         "profile",
         "email",
-        "api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation" // new API scope
+        "api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"
       ]
     });
 
     account = result.account;
-    localStorage.setItem("corelord_token", result.accessToken);
-    sessionStorage.setItem("authToken", result.accessToken);
+    const token = result.accessToken;
 
-    // Check if user profile exists
+    localStorage.setItem("corelord_token", token);
+    sessionStorage.setItem("authToken", token);
+
+    // Call backend to see if profile exists
     const response = await fetch("https://corelord-app-acg2g4b4abnc8bh.westeurope-01.azurewebsites.net/api/profile", {
       headers: {
-        Authorization: `Bearer ${result.accessToken}`
+        Authorization: `Bearer ${token}`
       }
     });
 
@@ -45,7 +47,7 @@ async function signIn() {
     }
   } catch (err) {
     console.error("Login failed:", err);
-    alert("Login failed. Please check the console.");
+    alert("Login failed. See console for details.");
   }
 }
 
@@ -53,9 +55,10 @@ async function signOut() {
   const logoutRequest = {
     account: msalInstance.getAllAccounts()[0]
   };
-  msalInstance.logoutPopup(logoutRequest);
+  await msalInstance.logoutPopup(logoutRequest);
   sessionStorage.removeItem("authToken");
   localStorage.removeItem("corelord_token");
+  window.location.href = "/";
 }
 
 window.onload = function () {
