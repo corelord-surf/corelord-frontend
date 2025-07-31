@@ -1,8 +1,8 @@
 const msalConfig = {
   auth: {
-    clientId: "825d8657-c509-42b6-9107-dd5e39268723", // CoreLord frontend app
-    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480", // Azure tenant
-    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net" // static frontend site
+    clientId: "825d8657-c509-42b6-9107-dd5e39268723", // frontend app client ID
+    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480", // tenant ID
+    redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net" // static frontend
   },
   cache: {
     cacheLocation: "localStorage",
@@ -27,12 +27,11 @@ async function signIn() {
     account = result.account;
     const token = result.accessToken;
 
-    // Store token in local/session storage
     localStorage.setItem("corelord_token", token);
     sessionStorage.setItem("authToken", token);
 
-    // Check if profile exists
-    const response = await fetch("https://corelord-app.azurewebsites.net/api/profile", {
+    // Check if user profile exists
+    const response = await fetch("https://corelord-app-acg2g4b4abnc8bh.westeurope-01.azurewebsites.net/api/profile", {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -43,12 +42,11 @@ async function signIn() {
     } else if (response.status === 404) {
       window.location.href = "/profile.html";
     } else {
-      console.error("❌ Unexpected response checking profile:", response.status);
+      console.error("Unexpected response checking profile:", response.status);
       alert("Error checking your profile. Please try again.");
     }
-
   } catch (err) {
-    console.error("❌ Login failed:", err);
+    console.error("Login failed:", err);
     alert("Login failed. See console for details.");
   }
 }
