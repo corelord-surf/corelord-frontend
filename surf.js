@@ -32,15 +32,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     sessionStorage.setItem("authToken", token);
 
     const response = await fetch("https://corelord-app.azurewebsites.net/api/profile", {
-
       headers: {
         Authorization: `Bearer ${token}`
       }
     });
 
-    if (!res.ok) throw new Error("Failed to fetch profile");
+    if (!response.ok) throw new Error("Failed to fetch profile");
 
-    const profile = await res.json();
+    const profile = await response.json();
     renderProfile(profile);
 
     const forecasts = [
@@ -72,7 +71,7 @@ function renderProfile(profile) {
   const info = document.getElementById("profileInfo");
 
   const breaks = profile.region || "Not set";
-  const availability = JSON.parse(profile.availability || "[]");
+  const availability = profile.availability || [];
 
   const availabilityFormatted = availability.length
     ? availability.join(", ")
@@ -118,3 +117,4 @@ function renderAuthButtons() {
 
   container.appendChild(logoutBtn);
 }
+  
