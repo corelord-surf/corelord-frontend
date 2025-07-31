@@ -1,6 +1,6 @@
 const msalConfig = {
   auth: {
-    clientId: "825d8657-c509-42b6-9107-dd5e39268723",
+    clientId: "825d8657-c509-42b6-9107-dd5e39268723", // frontend client
     authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
     redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
   },
@@ -9,6 +9,8 @@ const msalConfig = {
     storeAuthStateInCookie: false
   }
 };
+
+const apiScopes = ["api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"];
 
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 let account;
@@ -23,20 +25,15 @@ async function signIn() {
   signInInProgress = true;
 
   try {
-    const result = await msalInstance.loginPopup({
-      scopes: [
-        "openid",
-        "profile",
-        "email",
-        "api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"
-      ]
+    const loginResponse = await msalInstance.loginPopup({
+      scopes: ["openid", "profile", "email", ...apiScopes]
     });
 
-    account = result.account;
+    account = loginResponse.account;
     msalInstance.setActiveAccount(account);
 
     const tokenResponse = await msalInstance.acquireTokenSilent({
-      scopes: ["api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"],
+      scopes: apiScopes,
       account
     });
 
@@ -72,7 +69,7 @@ async function getToken() {
 
   try {
     const silentResult = await msalInstance.acquireTokenSilent({
-      scopes: ["api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"],
+      scopes: apiScopes,
       account: accounts[0]
     });
 
@@ -80,9 +77,25 @@ async function getToken() {
     localStorage.setItem("corelord_token", token);
     sessionStorage.setItem("authToken", token);
     return token;
-  } catch (e) {
-    console.warn("🔒 Token silent acquisition failed:", e);
-    return null;
+  } catch (err) {
+    if (err instanceof msal.InteractionRequiredAuthError) {
+      console.warn("🔒 Silent token failed, falling back to popup.");
+      try {
+        const popupResult = await msalInstance.acquireTokenPopup({
+          scopes: apiScopes
+        });
+        const token = popupResult.accessToken;
+        localStorage.setItem("corelord_token", token);
+        sessionStorage.setItem("authToken", token);
+        return token;
+      } catch (popupErr) {
+        console.error("❌ Popup token error:", popupErr);
+        return null;
+      }
+    } else {
+      console.error("❌ Token silent acquisition failed:", err);
+      return null;
+    }
   }
 }
 
