@@ -1,6 +1,6 @@
 const msalConfig = {
   auth: {
-    clientId: "825d8657-c509-42b6-9107-dd5e39268723", // frontend client
+    clientId: "825d8657-c509-42b6-9107-dd5e39268723",
     authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
     redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
   },
@@ -10,8 +10,7 @@ const msalConfig = {
   }
 };
 
-const apiScopes = ["api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"];
-
+const scopes = ["api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"];
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 let account;
 let signInInProgress = false;
@@ -26,22 +25,19 @@ async function signIn() {
 
   try {
     const loginResponse = await msalInstance.loginPopup({
-      scopes: ["openid", "profile", "email", ...apiScopes]
+      scopes: ["openid", "profile", "email", ...scopes]
     });
 
     account = loginResponse.account;
     msalInstance.setActiveAccount(account);
 
     const tokenResponse = await msalInstance.acquireTokenSilent({
-      scopes: apiScopes,
+      scopes,
       account
     });
 
     const token = tokenResponse.accessToken;
-    localStorage.setItem("corelord_token", token);
-    sessionStorage.setItem("authToken", token);
-    sessionStorage.setItem("userEmail", account.username);
-
+    storeTokenData(token, account.username);
     renderAuthButton(true);
     await checkProfileAndRedirect();
   } catch (err) {
@@ -65,44 +61,47 @@ async function getToken() {
   const accounts = msalInstance.getAllAccounts();
   if (accounts.length === 0) return null;
 
-  msalInstance.setActiveAccount(accounts[0]);
+  const activeAccount = accounts[0];
+  msalInstance.setActiveAccount(activeAccount);
 
   try {
     const silentResult = await msalInstance.acquireTokenSilent({
-      scopes: apiScopes,
-      account: accounts[0]
+      scopes,
+      account: activeAccount
     });
 
     const token = silentResult.accessToken;
-    localStorage.setItem("corelord_token", token);
-    sessionStorage.setItem("authToken", token);
+    storeTokenData(token, activeAccount.username);
     return token;
   } catch (err) {
     if (err instanceof msal.InteractionRequiredAuthError) {
-      console.warn("🔒 Silent token failed, falling back to popup.");
+      console.warn("🔒 Silent token failed, falling back to popup...");
       try {
-        const popupResult = await msalInstance.acquireTokenPopup({
-          scopes: apiScopes
-        });
+        const popupResult = await msalInstance.acquireTokenPopup({ scopes });
         const token = popupResult.accessToken;
-        localStorage.setItem("corelord_token", token);
-        sessionStorage.setItem("authToken", token);
+        storeTokenData(token, activeAccount.username);
         return token;
       } catch (popupErr) {
-        console.error("❌ Popup token error:", popupErr);
+        console.error("❌ Token popup acquisition failed:", popupErr);
         return null;
       }
     } else {
-      console.error("❌ Token silent acquisition failed:", err);
+      console.error("❌ Token silent acquisition error:", err);
       return null;
     }
   }
 }
 
+function storeTokenData(token, email) {
+  localStorage.setItem("corelord_token", token);
+  sessionStorage.setItem("authToken", token);
+  sessionStorage.setItem("userEmail", email);
+}
+
 async function checkProfileAndRedirect() {
   const token = await getToken();
   if (!token) {
-    console.warn("⚠️ No token available");
+    console.warn("⚠️ No token available. User likely not signed in.");
     return;
   }
 
@@ -116,14 +115,16 @@ async function checkProfileAndRedirect() {
     });
 
     if (response.status === 404) {
+      console.info("🔍 No profile found. Redirecting to profile setup...");
       window.location.href = "/profile.html";
     } else if (response.ok) {
+      console.info("✅ Profile found. Redirecting to dashboard...");
       window.location.href = "/dashboard.html";
     } else {
-      console.warn("⚠️ Unknown response from /api/profile");
+      console.warn(`⚠️ Unexpected response from /api/profile: ${response.status}`);
     }
   } catch (err) {
-    console.error("❌ Profile check error:", err);
+    console.error("❌ Error checking profile:", err);
   }
 }
 
