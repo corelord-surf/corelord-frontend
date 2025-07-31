@@ -68,6 +68,8 @@ async function getToken() {
   const accounts = msalInstance.getAllAccounts();
   if (accounts.length === 0) return null;
 
+  msalInstance.setActiveAccount(accounts[0]);
+
   try {
     const silentResult = await msalInstance.acquireTokenSilent({
       scopes: ["api://315eede8-ee31-4487-b202-81e495e8f9fe/user_impersonation"],
@@ -93,10 +95,11 @@ async function checkProfileAndRedirect() {
 
   try {
     const response = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
+      method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`
-      },
-      credentials: "include"
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
     });
 
     if (response.status === 404) {
@@ -136,6 +139,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   if (accounts.length > 0) {
     account = accounts[0];
+    msalInstance.setActiveAccount(account);
     renderAuthButton(true);
 
     if (window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {
