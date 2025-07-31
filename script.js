@@ -2,8 +2,8 @@
 
 const msalConfig = {
   auth: {
-    clientId: "YOUR_FRONTEND_APP_CLIENT_ID",
-    authority: "https://login.microsoftonline.com/YOUR_TENANT_ID",
+    clientId: "825d8657-c509-42b6-9107-dd5e39268723",
+    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
     redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
   },
   cache: {
@@ -11,6 +11,7 @@ const msalConfig = {
     storeAuthStateInCookie: false
   }
 };
+
 
 const tokenRequest = {
   scopes: [
