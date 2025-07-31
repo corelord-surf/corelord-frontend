@@ -31,7 +31,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const token = tokenResponse.accessToken;
     sessionStorage.setItem("authToken", token);
 
-    const res = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
+    const response = await fetch("https://corelord-app.azurewebsites.net/api/profile", {
+
       headers: {
         Authorization: `Bearer ${token}`
       }

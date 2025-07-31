@@ -10,7 +10,8 @@ function logout() {
 
 async function loadProfile() {
   try {
-    const response = await fetch("https://corelord-app-acg2g4b4a8bnc8bh.westeurope-01.azurewebsites.net/api/profile", {
+    const response = await fetch("https://corelord-app.azurewebsites.net/api/profile", {
+
       headers: {
         Authorization: `Bearer ${getToken()}`,
         "Content-Type": "application/json"
