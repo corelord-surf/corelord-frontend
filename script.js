@@ -1,7 +1,9 @@
+// script.js
+
 const msalConfig = {
   auth: {
-    clientId: "d5588e78-ac05-4a5f-8c0f-490e5547dd3c", // corelord-frontend
-    authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
+    clientId: "YOUR_FRONTEND_APP_CLIENT_ID",
+    authority: "https://login.microsoftonline.com/YOUR_TENANT_ID",
     redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
   },
   cache: {
@@ -10,88 +12,113 @@ const msalConfig = {
   }
 };
 
+const tokenRequest = {
+  scopes: [
+    "openid",
+    "profile",
+    "email",
+    "api://YOUR_API_APP_CLIENT_ID/access_as_user"
+  ]
+};
+
 const msalInstance = new msal.PublicClientApplication(msalConfig);
-
-// DOM elements
-const loginBtn = document.getElementById("login-btn");
-const logoutBtn = document.getElementById("logout-btn");
-
 let account = null;
 
-// Handle login
-async function signIn() {
-  try {
-    const result = await msalInstance.loginPopup({
-      scopes: [
-        "openid",
-        "profile",
-        "email",
-        "api://a56c161a-b280-4f07-8c07-b37c51044c56/access_as_user"
-      ]
-    });
+// Called on each page that includes this script
+window.addEventListener("DOMContentLoaded", async () => {
+  account = msalInstance.getAllAccounts()[0];
+  if (account) {
+    try {
+      const tokenResponse = await msalInstance.acquireTokenSilent({
+        ...tokenRequest,
+        account
+      });
 
-    account = result.account;
-    localStorage.setItem("corelord_token", result.accessToken);
+      const token = tokenResponse.accessToken;
+      sessionStorage.setItem("authToken", token);
 
-    checkProfileAndRedirect();
-  } catch (err) {
-    console.error("Login failed:", err);
-    alert("Login error. Check console.");
+      renderAuthButtons(true);
+
+      // Optional: redirect logic on homepage
+      if (window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {
+        const res = await fetch("https://corelord-backend.azurewebsites.net/api/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (res.status === 200) {
+          window.location.href = "dashboard.html";
+        } else if (res.status === 404) {
+          window.location.href = "profile.html";
+        }
+      }
+    } catch (err) {
+      console.warn("Token acquisition failed silently:", err);
+      renderAuthButtons(false);
+    }
+  } else {
+    renderAuthButtons(false);
+  }
+});
+
+function renderAuthButtons(isSignedIn) {
+  const container = document.getElementById("auth-buttons");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (isSignedIn) {
+    const logoutBtn = document.createElement("button");
+    logoutBtn.textContent = "Logout";
+    logoutBtn.className = "bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white";
+    logoutBtn.onclick = logout;
+    container.appendChild(logoutBtn);
+  } else {
+    const loginBtn = document.createElement("button");
+    loginBtn.textContent = "Login";
+    loginBtn.className = "bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white";
+    loginBtn.onclick = login;
+    container.appendChild(loginBtn);
   }
 }
 
-// Handle logout
-function signOut() {
-  msalInstance.logoutPopup();
-  localStorage.removeItem("corelord_token");
-  location.reload();
-}
-
-// Check if profile exists, then route
-async function checkProfileAndRedirect() {
-  const token = localStorage.getItem("corelord_token");
-  if (!token) return;
-
+async function login() {
   try {
-    const response = await fetch("https://corelord-api.azurewebsites.net/api/profile", {
+    const loginResponse = await msalInstance.loginPopup(tokenRequest);
+    account = loginResponse.account;
+
+    const tokenResponse = await msalInstance.acquireTokenSilent({
+      ...tokenRequest,
+      account
+    });
+
+    sessionStorage.setItem("authToken", tokenResponse.accessToken);
+    renderAuthButtons(true);
+
+    // Fetch profile and redirect accordingly
+    const res = await fetch("https://corelord-backend.azurewebsites.net/api/profile", {
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${tokenResponse.accessToken}`
       }
     });
 
-    if (response.status === 200) {
-      // Profile exists → go to dashboard
+    if (res.status === 200) {
       window.location.href = "dashboard.html";
-    } else if (response.status === 404) {
-      // Profile not found → go to setup
+    } else if (res.status === 404) {
       window.location.href = "profile.html";
     } else {
-      throw new Error(`Unexpected response: ${response.status}`);
+      alert("Unexpected response from server.");
     }
-  } catch (error) {
-    console.error("Error checking profile:", error);
-    alert("Could not load profile. See console for details.");
+  } catch (err) {
+    console.error("Login failed:", err);
+    alert("Login failed.");
   }
 }
 
-// Add buttons dynamically (optional)
-function setupButtons() {
-  if (loginBtn) loginBtn.addEventListener("click", signIn);
-  if (logoutBtn) logoutBtn.addEventListener("click", signOut);
+function logout() {
+  msalInstance.logoutPopup().then(() => {
+    sessionStorage.removeItem("authToken");
+    window.location.href = "index.html";
+  });
 }
-
-// Auto-login logic
-window.onload = async () => {
-  setupButtons();
-
-  const token = localStorage.getItem("corelord_token");
-
-  if (token) {
-    // Check if still valid — optionally refresh or validate
-    try {
-      await checkProfileAndRedirect();
-    } catch (e) {
-      console.warn("Token check failed. Staying on landing.");
-    }
-  }
-};
