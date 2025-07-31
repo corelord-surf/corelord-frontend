@@ -5,13 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CoreLord - Surf Forecasting Reimagined</title>
 
-    <!-- Redirect to dashboard if already logged in -->
-    <script>
-      if (sessionStorage.getItem("authToken")) {
-        window.location.href = "dashboard.html";
-      }
-    </script>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
     <script defer src="script.js"></script>
