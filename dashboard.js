@@ -10,7 +10,7 @@ function logout() {
 
 async function loadProfile() {
   try {
-    const response = await fetch("https://corelord-app-acg2g4b4abnc8bh.westeurope-01.azurewebsites.net/api/profile", {
+    const response = await fetch("https://corelord-app.azurewebsites.net/api/profile", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${getToken()}`,
@@ -25,10 +25,10 @@ async function loadProfile() {
 
     const profile = await response.json();
 
-    // Preferred break
+    // Display preferred break
     document.getElementById("preferredBreak").textContent = profile.region || "Not set";
 
-    // Weekly availability
+    // Display weekly availability
     const availList = document.getElementById("availabilityList");
     availList.innerHTML = "";
     (profile.availability || []).forEach(day => {
