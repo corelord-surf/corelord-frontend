@@ -2,6 +2,10 @@ document.getElementById("profileForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const token = sessionStorage.getItem("authToken");
+  if (!token) {
+    alert("You're not logged in.");
+    return;
+  }
 
   const displayName = document.getElementById("displayName").value;
   const region = document.getElementById("region").value;
@@ -14,13 +18,12 @@ document.getElementById("profileForm").addEventListener("submit", async (e) => {
   const profile = {
     name: displayName,
     region,
-    phone: "", // optional, placeholder
+    phone: "", // optional for now
     updates: [],
     availability
   };
 
   const response = await fetch("https://corelord-app.azurewebsites.net/api/profile", {
-
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -29,10 +32,11 @@ document.getElementById("profileForm").addEventListener("submit", async (e) => {
     body: JSON.stringify(profile)
   });
 
-  if (res.ok) {
+  if (response.ok) {
     alert("Profile saved!");
     window.location.href = "surf.html";
   } else {
     alert("Error saving profile");
+    console.error("Profile save failed:", response.status);
   }
 });
