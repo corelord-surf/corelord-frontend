@@ -23,7 +23,7 @@ document.getElementById("profileForm").addEventListener("submit", async (e) => {
     availability
   };
 
-  const response = await fetch("https://corelord-app-acg2g4b4abnc8bh.westeurope-01.azurewebsites.net/api/profile", {
+  const response = await fetch("https://corelord-app.azurewebsites.net/api/profile", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
