@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const token = sessionStorage.getItem('authToken');
+  const token = sessionStorage.getItem('authToken') || localStorage.getItem('corelord_token');
+
   if (!token) {
+    console.warn("⚠️ No auth token found in session or local storage");
     window.location.href = '/index.html';
     return;
   }
