@@ -1,8 +1,6 @@
-// script.js
-
 const msalConfig = {
   auth: {
-    clientId: "825d8657-c509-42b6-9107-dd5e39268723",
+    clientId: "825d8657-c509-42b6-9107-dd5e39268723", // corelord-frontend
     authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
     redirectUri: "https://agreeable-ground-04732bc03.1.azurestaticapps.net"
   },
@@ -12,114 +10,60 @@ const msalConfig = {
   }
 };
 
-
-const tokenRequest = {
-  scopes: [
-    "openid",
-    "profile",
-    "email",
-    "api://YOUR_API_APP_CLIENT_ID/access_as_user"
-  ]
-};
-
 const msalInstance = new msal.PublicClientApplication(msalConfig);
-let account = null;
 
-// Called on each page that includes this script
-window.addEventListener("DOMContentLoaded", async () => {
-  account = msalInstance.getAllAccounts()[0];
-  if (account) {
-    try {
-      const tokenResponse = await msalInstance.acquireTokenSilent({
-        ...tokenRequest,
-        account
-      });
+async function signIn() {
+  try {
+    const result = await msalInstance.loginPopup({
+      scopes: [
+        "openid",
+        "profile",
+        "email",
+        "api://a56c161a-b280-4f07-8c07-b37c51044c56/access_as_user"
+      ]
+    });
 
-      const token = tokenResponse.accessToken;
-      sessionStorage.setItem("authToken", token);
+    localStorage.setItem("corelord_token", result.accessToken);
+    sessionStorage.setItem("authToken", result.accessToken);
 
-      renderAuthButtons(true);
-
-      // Optional: redirect logic on homepage
-      if (window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {
-        const res = await fetch("https://corelord-backend.azurewebsites.net/api/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (res.status === 200) {
-          window.location.href = "dashboard.html";
-        } else if (res.status === 404) {
-          window.location.href = "profile.html";
-        }
+    // Check profile existence
+    const response = await fetch("https://corelord-surf.azurewebsites.net/api/profile", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${result.accessToken}`
       }
-    } catch (err) {
-      console.warn("Token acquisition failed silently:", err);
-      renderAuthButtons(false);
-    }
-  } else {
-    renderAuthButtons(false);
-  }
-});
+    });
 
-function renderAuthButtons(isSignedIn) {
+    const redirectUrl = response.status === 404 ? "profile.html" : "dashboard.html";
+    window.location.href = redirectUrl;
+
+  } catch (error) {
+    console.error("Login failed:", error);
+  }
+}
+
+function renderAuthButtons() {
   const container = document.getElementById("auth-buttons");
   if (!container) return;
 
   container.innerHTML = "";
-
-  if (isSignedIn) {
+  if (sessionStorage.getItem("authToken")) {
     const logoutBtn = document.createElement("button");
     logoutBtn.textContent = "Logout";
     logoutBtn.className = "bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white";
-    logoutBtn.onclick = logout;
+    logoutBtn.onclick = () => {
+      sessionStorage.removeItem("authToken");
+      localStorage.removeItem("corelord_token");
+      window.location.href = "index.html";
+    };
     container.appendChild(logoutBtn);
   } else {
     const loginBtn = document.createElement("button");
     loginBtn.textContent = "Login";
     loginBtn.className = "bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white";
-    loginBtn.onclick = login;
+    loginBtn.onclick = signIn;
     container.appendChild(loginBtn);
   }
 }
 
-async function login() {
-  try {
-    const loginResponse = await msalInstance.loginPopup(tokenRequest);
-    account = loginResponse.account;
-
-    const tokenResponse = await msalInstance.acquireTokenSilent({
-      ...tokenRequest,
-      account
-    });
-
-    sessionStorage.setItem("authToken", tokenResponse.accessToken);
-    renderAuthButtons(true);
-
-    // Fetch profile and redirect accordingly
-    const res = await fetch("https://corelord-backend.azurewebsites.net/api/profile", {
-      headers: {
-        Authorization: `Bearer ${tokenResponse.accessToken}`
-      }
-    });
-
-    if (res.status === 200) {
-      window.location.href = "dashboard.html";
-    } else if (res.status === 404) {
-      window.location.href = "profile.html";
-    } else {
-      alert("Unexpected response from server.");
-    }
-  } catch (err) {
-    console.error("Login failed:", err);
-    alert("Login failed.");
-  }
-}
-
-function logout() {
-  msalInstance.logoutPopup().then(() => {
-    sessionStorage.removeItem("authToken");
-    window.location.href = "index.html";
-  });
-}
+window.onload = renderAuthButtons;
