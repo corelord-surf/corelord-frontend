@@ -1,6 +1,6 @@
 const msalConfig = {
   auth: {
-    clientId: "7258cfca-e901-4077-8fba-224f8bc595e4", // your frontend app registration
+    clientId: "7258cfca-e901-4077-8fba-224f8bc595e4",
     authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
     redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net/dashboard.html"
   },
@@ -11,8 +11,7 @@ const msalConfig = {
 };
 
 const msalInstance = new msal.PublicClientApplication(msalConfig);
-const scopes = ["openid", "profile", "email", "api://2070bf8a-ea72-43e3-8c90-b3a39e585f5c/user_impersonation"]; // corrected backend scope
-
+const scopes = ["openid", "profile", "email", "api://2070bf8a-ea72-43e3-8c90-b3a39e585f5c/user_impersonation"];
 let accessToken;
 
 async function loadDashboard() {
@@ -25,7 +24,10 @@ async function loadDashboard() {
   const account = accounts[0];
 
   try {
-    const tokenResponse = await msalInstance.acquireTokenSilent({ scopes, account });
+    const tokenResponse = await msalInstance.acquireTokenSilent({
+      scopes,
+      account
+    });
     accessToken = tokenResponse.accessToken;
 
     const res = await fetch("https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile", {
@@ -48,11 +50,16 @@ async function loadDashboard() {
   }
 }
 
+msalInstance.handleRedirectPromise()
+  .then(loadDashboard)
+  .catch(error => {
+    console.error("Redirect handling error:", error);
+    document.body.innerHTML = "<h2>Authentication error. Please <a href='/'>sign in again</a>.</h2>";
+  });
+
 document.getElementById("signOutBtn").addEventListener("click", () => {
   const logoutRequest = {
     account: msalInstance.getAllAccounts()[0]
   };
   msalInstance.logoutRedirect(logoutRequest);
 });
-
-loadDashboard();
