@@ -33,7 +33,7 @@
       margin-top: 1rem;
     }
 
-    input, select {
+    input {
       padding: 0.5rem;
       margin-top: 0.25rem;
       border-radius: 4px;
@@ -105,7 +105,7 @@
 
         const tokenResponse = await msalInstance.acquireTokenSilent({
           scopes: ["openid", "profile", "email"],
-          account: account
+          account
         });
 
         accessToken = tokenResponse.accessToken;
@@ -140,7 +140,7 @@
         }
 
         document.getElementById("message").innerText = "Profile created successfully!";
-        // Future: Redirect to dashboard here
+        // Future: Redirect to dashboard or surf preferences page
       } catch (error) {
         console.error("Error submitting profile", error);
         document.getElementById("message").innerText = "Failed to submit profile.";

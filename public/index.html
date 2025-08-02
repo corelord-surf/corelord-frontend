@@ -18,18 +18,22 @@
       text-align: center;
       flex-direction: column;
     }
+
     h1 {
       font-size: 3rem;
       margin-bottom: 1rem;
     }
+
     p {
       font-size: 1.25rem;
       margin-bottom: 2rem;
     }
+
     .auth-buttons {
       display: flex;
       gap: 1rem;
     }
+
     .auth-buttons button {
       padding: 0.75rem 1.25rem;
       font-size: 1rem;
@@ -37,6 +41,7 @@
       border-radius: 6px;
       cursor: pointer;
     }
+
     #signOutBtn {
       position: absolute;
       top: 1rem;
@@ -56,7 +61,7 @@
 
   <button id="signOutBtn" onclick="signOut()">Sign Out</button>
 
-  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+  <script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
   <script>
     const msalConfig = {
       auth: {
@@ -71,15 +76,13 @@
     };
 
     const msalInstance = new msal.PublicClientApplication(msalConfig);
-    let account;
 
     async function signIn() {
       try {
         const result = await msalInstance.loginPopup({
           scopes: ["openid", "profile", "email"]
         });
-        account = result.account;
-        window.location.href = "/profile.html";
+        window.location.href = "/dashboard.html";
       } catch (error) {
         console.error("Sign-in error:", error);
       }
@@ -91,7 +94,6 @@
           scopes: ["openid", "profile", "email"],
           prompt: "select_account"
         });
-        account = result.account;
         window.location.href = "/profile.html";
       } catch (error) {
         console.error("Sign-up error:", error);
@@ -99,10 +101,10 @@
     }
 
     function signOut() {
-      const logoutRequest = {
-        account: msalInstance.getAllAccounts()[0]
-      };
-      msalInstance.logoutPopup(logoutRequest);
+      const account = msalInstance.getAllAccounts()[0];
+      if (account) {
+        msalInstance.logoutPopup({ account });
+      }
     }
   </script>
 </body>
