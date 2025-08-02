@@ -18,18 +18,22 @@
       text-align: center;
       flex-direction: column;
     }
+
     h1 {
       font-size: 3rem;
       margin-bottom: 1rem;
     }
+
     p {
       font-size: 1.25rem;
       margin-bottom: 2rem;
     }
+
     .auth-buttons {
       display: flex;
       gap: 1rem;
     }
+
     .auth-buttons button {
       padding: 0.75rem 1.25rem;
       font-size: 1rem;
@@ -37,6 +41,7 @@
       border-radius: 6px;
       cursor: pointer;
     }
+
     #signOutBtn {
       position: absolute;
       top: 1rem;
@@ -50,60 +55,67 @@
   <p>Surf smarter. Plan your week with precision - public.</p>
 
   <div class="auth-buttons">
-    <button onclick="signIn()">Sign In</button>
-    <button onclick="signUp()">Sign Up</button>
+    <button id="signInBtn">Sign In</button>
+    <button id="signUpBtn">Sign Up</button>
   </div>
 
-  <button id="signOutBtn" onclick="signOut()">Sign Out</button>
+  <button id="signOutBtn">Sign Out</button>
 
-  <!-- Load MSAL.js from CDN -->
+  <!-- Load MSAL from CDN -->
   <script src="https://alcdn.msauth.net/browser/msal-browser.min.js"></script>
 
-  <!-- Core authentication logic -->
+  <!-- Initialise MSAL and bind auth buttons -->
   <script>
-    const msalConfig = {
-      auth: {
-        clientId: "7258dcfa-e901-4077-8fba-224fbc595e4",
-        authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
-        redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net"
-      },
-      cache: {
-        cacheLocation: "localStorage",
-        storeAuthStateInCookie: false
-      }
-    };
-
-    const msalInstance = new msal.PublicClientApplication(msalConfig);
-
-    async function signIn() {
-      try {
-        const result = await msalInstance.loginPopup({
-          scopes: ["openid", "profile", "email"]
-        });
-        window.location.href = "/profile.html";
-      } catch (error) {
-        console.error("Sign-in error:", error);
-      }
-    }
-
-    async function signUp() {
-      try {
-        const result = await msalInstance.loginPopup({
-          scopes: ["openid", "profile", "email"],
-          prompt: "select_account"
-        });
-        window.location.href = "/profile.html";
-      } catch (error) {
-        console.error("Sign-up error:", error);
-      }
-    }
-
-    function signOut() {
-      const logoutRequest = {
-        account: msalInstance.getAllAccounts()[0]
+    window.onload = function () {
+      const msalConfig = {
+        auth: {
+          clientId: "7258dcfa-e901-4077-8fba-224fbc595e4",
+          authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
+          redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net"
+        },
+        cache: {
+          cacheLocation: "localStorage",
+          storeAuthStateInCookie: false
+        }
       };
-      msalInstance.logoutPopup(logoutRequest);
-    }
+
+      const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+      async function signIn() {
+        try {
+          const result = await msalInstance.loginPopup({
+            scopes: ["openid", "profile", "email"]
+          });
+          window.location.href = "/profile.html";
+        } catch (error) {
+          console.error("Sign-in error:", error);
+        }
+      }
+
+      async function signUp() {
+        try {
+          const result = await msalInstance.loginPopup({
+            scopes: ["openid", "profile", "email"],
+            prompt: "select_account"
+          });
+          window.location.href = "/profile.html";
+        } catch (error) {
+          console.error("Sign-up error:", error);
+        }
+      }
+
+      function signOut() {
+        const logoutRequest = {
+          account: msalInstance.getAllAccounts()[0]
+        };
+        msalInstance.logoutPopup(logoutRequest);
+      }
+
+      // Wire up buttons
+      document.getElementById("signInBtn").onclick = signIn;
+      document.getElementById("signUpBtn").onclick = signUp;
+      document.getElementById("signOutBtn").onclick = signOut;
+    };
   </script>
 </body>
 </html>
