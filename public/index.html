@@ -44,24 +44,23 @@
       padding: 0.5rem 1rem;
     }
   </style>
+  <script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
 </head>
 <body>
   <h1>Welcome to CoreLord</h1>
   <p>Surf smarter. Plan your week with precision - public.</p>
 
   <div class="auth-buttons">
-    <button id="signInBtn">Sign In</button>
-    <button id="signUpBtn">Sign Up</button>
+    <button onclick="signIn()">Sign In</button>
+    <button onclick="signUp()">Sign Up</button>
   </div>
 
-  <button id="signOutBtn">Sign Out</button>
+  <button id="signOutBtn" onclick="signOut()">Sign Out</button>
 
-  <!-- Load MSAL first -->
-  <script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
-
-  <!-- Then run your app logic -->
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+    let msalInstance;
+
+    window.addEventListener('DOMContentLoaded', () => {
       const msalConfig = {
         auth: {
           clientId: "7258dcfa-e901-4077-8fba-224fbc595e4",
@@ -74,38 +73,38 @@
         }
       };
 
-      const msalInstance = new msal.PublicClientApplication(msalConfig);
-
-      document.getElementById("signInBtn").addEventListener("click", async () => {
-        try {
-          const result = await msalInstance.loginPopup({ scopes: ["openid", "profile", "email"] });
-          window.location.href = "/profile.html";
-        } catch (err) {
-          console.error("Sign-in error:", err);
-        }
-      });
-
-      document.getElementById("signUpBtn").addEventListener("click", async () => {
-        try {
-          const result = await msalInstance.loginPopup({
-            scopes: ["openid", "profile", "email"],
-            prompt: "select_account"
-          });
-          window.location.href = "/profile.html";
-        } catch (err) {
-          console.error("Sign-up error:", err);
-        }
-      });
-
-      document.getElementById("signOutBtn").addEventListener("click", () => {
-        const account = msalInstance.getAllAccounts()[0];
-        if (account) {
-          msalInstance.logoutPopup({ account });
-        }
-      });
-
-      console.log("MSAL initialised on splash");
+      msalInstance = new msal.PublicClientApplication(msalConfig);
     });
+
+    async function signIn() {
+      try {
+        const result = await msalInstance.loginPopup({
+          scopes: ["openid", "profile", "email"]
+        });
+        window.location.href = "/profile.html";
+      } catch (error) {
+        console.error("Sign-in error:", error);
+      }
+    }
+
+    async function signUp() {
+      try {
+        const result = await msalInstance.loginPopup({
+          scopes: ["openid", "profile", "email"],
+          prompt: "select_account"
+        });
+        window.location.href = "/profile.html";
+      } catch (error) {
+        console.error("Sign-up error:", error);
+      }
+    }
+
+    function signOut() {
+      const logoutRequest = {
+        account: msalInstance.getAllAccounts()[0]
+      };
+      msalInstance.logoutPopup(logoutRequest);
+    }
   </script>
 </body>
 </html>
