@@ -68,7 +68,7 @@
     window.onload = async function () {
       const msalConfig = {
         auth: {
-          clientId: "7258dcfa-e901-4077-8fba-224fbc595e4",
+          clientId: "207b8fba-ea72-43e3-8c90-b3a39e58f5fc", // correct app: corelord-production-api
           authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
           redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net"
         },
@@ -79,13 +79,14 @@
       };
 
       const msalInstance = new msal.PublicClientApplication(msalConfig);
-      await msalInstance.initialize(); // Required in MSAL v3+
+      await msalInstance.initialize();
 
       async function signIn() {
         try {
           const result = await msalInstance.loginPopup({
             scopes: ["openid", "profile", "email"]
           });
+          console.log("Sign-in successful:", result.account);
           window.location.href = "/profile.html";
         } catch (error) {
           console.error("Sign-in error:", error);
@@ -98,6 +99,7 @@
             scopes: ["openid", "profile", "email"],
             prompt: "select_account"
           });
+          console.log("Sign-up successful:", result.account);
           window.location.href = "/profile.html";
         } catch (error) {
           console.error("Sign-up error:", error);
@@ -111,7 +113,6 @@
         msalInstance.logoutPopup(logoutRequest);
       }
 
-      // Hook up buttons
       document.getElementById("signInBtn").onclick = signIn;
       document.getElementById("signUpBtn").onclick = signUp;
       document.getElementById("signOutBtn").onclick = signOut;
