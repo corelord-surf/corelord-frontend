@@ -44,7 +44,6 @@
       padding: 0.5rem 1rem;
     }
   </style>
-  <script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
 </head>
 <body>
   <h1>Welcome to CoreLord</h1>
@@ -57,24 +56,24 @@
 
   <button id="signOutBtn" onclick="signOut()">Sign Out</button>
 
+  <!-- Load MSAL from CDN FIRST -->
+  <script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
+
+  <!-- Then run your app script AFTER MSAL is loaded -->
   <script>
-    let msalInstance;
+    const msalConfig = {
+      auth: {
+        clientId: "7258dcfa-e901-4077-8fba-224fbc595e4",
+        authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
+        redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net"
+      },
+      cache: {
+        cacheLocation: "localStorage",
+        storeAuthStateInCookie: false
+      }
+    };
 
-    window.addEventListener('DOMContentLoaded', () => {
-      const msalConfig = {
-        auth: {
-          clientId: "7258dcfa-e901-4077-8fba-224fbc595e4",
-          authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
-          redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net"
-        },
-        cache: {
-          cacheLocation: "localStorage",
-          storeAuthStateInCookie: false
-        }
-      };
-
-      msalInstance = new msal.PublicClientApplication(msalConfig);
-    });
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
 
     async function signIn() {
       try {
