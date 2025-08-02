@@ -79,7 +79,7 @@
   <script>
     function loadMsalScript(callback) {
       const script = document.createElement('script');
-      script.src = "https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js";
+      script.src = "https://alcdn.msauth.net/browser/2.38.2/js/msal-browser.min.js";  // corrected version
       script.onload = callback;
       script.onerror = () => {
         document.getElementById("message").innerText = "Failed to load authentication library.";
