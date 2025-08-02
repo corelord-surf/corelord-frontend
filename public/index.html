@@ -24,29 +24,44 @@
     }
     p {
       font-size: 1.25rem;
+      margin-bottom: 2rem;
     }
-    button {
-      padding: 10px 20px;
+    .auth-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+    .auth-buttons button {
+      padding: 0.75rem 1.25rem;
       font-size: 1rem;
-      margin-top: 20px;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
     }
+    #signOutBtn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.5rem 1rem;
+    }
   </style>
-  <script type="text/javascript" src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
 </head>
 <body>
-  <div>
-    <h1>Welcome to CoreLord</h1>
-    <p>Surf smarter. Plan your week with precision - public.</p>
+  <h1>Welcome to CoreLord</h1>
+  <p>Surf smarter. Plan your week with precision - public.</p>
+
+  <div class="auth-buttons">
     <button onclick="signIn()">Sign In</button>
-    <button onclick="signOut()">Sign Out</button>
+    <button onclick="signUp()">Sign Up</button>
   </div>
 
+  <button id="signOutBtn" onclick="signOut()">Sign Out</button>
+
+  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
   <script>
     const msalConfig = {
       auth: {
-        clientId: "7258dcfa-e901-4077-8fba-224fbc595e4", // corelord-github-deploy
-        authority: "https://login.microsoftonline.com/common",
+        clientId: "7258dcfa-e901-4077-8fba-224fbc595e4",
+        authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
         redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net"
       },
       cache: {
@@ -56,34 +71,39 @@
     };
 
     const msalInstance = new msal.PublicClientApplication(msalConfig);
+    let account;
 
     async function signIn() {
       try {
-        const loginResponse = await msalInstance.loginPopup({
+        const result = await msalInstance.loginPopup({
           scopes: ["openid", "profile", "email"]
         });
-        localStorage.setItem("user", JSON.stringify(loginResponse.account));
-        console.log("Logged in as:", loginResponse.account);
-        window.location.href = "/profile.html"; // Next step: create this
-      } catch (err) {
-        console.error(err);
-        alert("Sign in failed.");
+        account = result.account;
+        window.location.href = "/profile.html";
+      } catch (error) {
+        console.error("Sign-in error:", error);
+      }
+    }
+
+    async function signUp() {
+      try {
+        const result = await msalInstance.loginPopup({
+          scopes: ["openid", "profile", "email"],
+          prompt: "select_account"
+        });
+        account = result.account;
+        window.location.href = "/profile.html";
+      } catch (error) {
+        console.error("Sign-up error:", error);
       }
     }
 
     function signOut() {
-      msalInstance.logoutPopup();
-      localStorage.removeItem("user");
+      const logoutRequest = {
+        account: msalInstance.getAllAccounts()[0]
+      };
+      msalInstance.logoutPopup(logoutRequest);
     }
-
-    // Check if user is already signed in
-    window.onload = () => {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user) {
-        console.log("User already signed in:", user);
-        // Redirect if needed or keep them on splash page
-      }
-    };
   </script>
 </body>
 </html>
