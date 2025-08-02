@@ -52,7 +52,7 @@
 </head>
 <body>
   <h1>Welcome to CoreLord</h1>
-  <p>Surf smarter. Plan your week with precision - public.</p>
+  <p>Surf smarter. Plan your week with precision – public.</p>
 
   <div class="auth-buttons">
     <button id="signInBtn">Sign In</button>
@@ -61,14 +61,12 @@
 
   <button id="signOutBtn">Sign Out</button>
 
-  <!-- Load MSAL from jsDelivr CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.0.0/lib/msal-browser.min.js"></script>
-
   <script>
     window.onload = async function () {
       const msalConfig = {
         auth: {
-          clientId: "207b8fba-ea72-43e3-8c90-b3a39e58f5fc", // correct app: corelord-production-api
+          clientId: "207b8fba-ea72-43e3-8c90-b3a39e58f5fc",
           authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
           redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net"
         },
