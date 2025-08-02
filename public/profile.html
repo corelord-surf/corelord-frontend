@@ -55,11 +55,7 @@
       text-align: center;
     }
   </style>
-
-  <!-- Important: This must load before your code uses `msal` -->
-  <script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
 </head>
-
 <body>
   <h1>Create Your Profile</h1>
   <form id="profileForm">
@@ -79,8 +75,15 @@
   </form>
   <div id="message"></div>
 
-  <!-- App logic loaded AFTER msal -->
-  <script>
+  <!-- ✅ Ensure MSAL script loads BEFORE any custom code runs -->
+  <script type="text/javascript" src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
+
+  <script type="text/javascript">
+    if (typeof msal === "undefined") {
+      document.getElementById("message").innerText = "Failed to load authentication library.";
+      throw new Error("MSAL library not loaded.");
+    }
+
     const msalConfig = {
       auth: {
         clientId: "7258dcfa-e901-4077-8fba-224fbc595e4",
@@ -146,7 +149,7 @@
         }
 
         document.getElementById("message").innerText = "Profile created successfully!";
-        // You can redirect here if needed
+        // window.location.href = "/dashboard.html"; // future redirect
       } catch (error) {
         console.error("Error submitting profile", error);
         document.getElementById("message").innerText = "Failed to submit profile.";
