@@ -91,13 +91,7 @@
     const msalInstance = new msal.PublicClientApplication(msalConfig);
     let account;
     let accessToken;
-
-    const scopes = [
-      "openid",
-      "profile",
-      "email",
-      "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation"
-    ];
+    const scopes = ["openid", "profile", "email", "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation"];
 
     async function handleAuth() {
       try {
@@ -117,13 +111,21 @@
 
         document.getElementById("email").value = account.username;
 
-        const tokenResponse = await msalInstance.acquireTokenSilent({
-          scopes,
-          account
-        });
+        try {
+          const tokenResponse = await msalInstance.acquireTokenSilent({
+            scopes,
+            account
+          });
 
-        accessToken = tokenResponse.accessToken;
-
+          accessToken = tokenResponse.accessToken;
+        } catch (silentError) {
+          if (silentError instanceof msal.InteractionRequiredAuthError) {
+            await msalInstance.acquireTokenRedirect({ scopes });
+            return;
+          } else {
+            throw silentError;
+          }
+        }
       } catch (error) {
         console.error("Authentication error:", error);
         document.getElementById("message").innerText = "Authentication failed.";
