@@ -78,7 +78,7 @@
   <script>
     const msalConfig = {
       auth: {
-        clientId: "7258dcfa-e901-4077-8fba-224fbc595e4",
+        clientId: "7258cfca-e901-4077-8fba-224f8bc595e4",
         authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
         redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net/profile.html"
       },
@@ -92,6 +92,13 @@
     let account;
     let accessToken;
 
+    const scopes = [
+      "openid",
+      "profile",
+      "email",
+      "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation"
+    ];
+
     async function handleAuth() {
       try {
         const result = await msalInstance.handleRedirectPromise();
@@ -101,7 +108,7 @@
         } else {
           const currentAccounts = msalInstance.getAllAccounts();
           if (currentAccounts.length === 0) {
-            msalInstance.loginRedirect({ scopes: ["openid", "profile", "email"] });
+            msalInstance.loginRedirect({ scopes });
             return;
           } else {
             account = currentAccounts[0];
@@ -111,8 +118,8 @@
         document.getElementById("email").value = account.username;
 
         const tokenResponse = await msalInstance.acquireTokenSilent({
-          scopes: ["openid", "profile", "email"],
-          account: account
+          scopes,
+          account
         });
 
         accessToken = tokenResponse.accessToken;
