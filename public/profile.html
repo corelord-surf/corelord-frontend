@@ -96,18 +96,20 @@
       try {
         const accounts = msalInstance.getAllAccounts();
 
-        if (accounts.length === 0) {
+        let account = accounts[0];
+
+        if (!account) {
           const loginResponse = await msalInstance.loginPopup({
             scopes: ["openid", "profile", "email"]
           });
-          document.getElementById("email").value = loginResponse.account.username;
-        } else {
-          document.getElementById("email").value = accounts[0].username;
+          account = loginResponse.account;
         }
 
-        const tokenResponse = await msalInstance.acquireTokenSilent({
+        document.getElementById("email").value = account.username;
+
+        const tokenResponse = await msalInstance.acquireTokenPopup({
           scopes: ["openid", "profile", "email"],
-          account: msalInstance.getAllAccounts()[0]
+          account: account
         });
 
         accessToken = tokenResponse.accessToken;
