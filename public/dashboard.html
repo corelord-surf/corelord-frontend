@@ -69,20 +69,25 @@
     };
 
     const msalInstance = new msal.PublicClientApplication(msalConfig);
-    const scopes = ["openid", "profile", "email", "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation"];
+    const scopes = ["openid", "profile", "email", "api://2070bf8a-ea72-43e3-8c90-b3a39e585f5c/user_impersonation"];
     let accessToken;
 
     async function loadDashboard() {
-      const accounts = msalInstance.getAllAccounts();
-      if (accounts.length === 0) {
-        msalInstance.loginRedirect({ scopes });
-        return;
+      let account = msalInstance.getAllAccounts()[0];
+
+      if (!account) {
+        try {
+          const loginResponse = await msalInstance.loginPopup({ scopes });
+          account = loginResponse.account;
+        } catch (loginError) {
+          console.error("Login failed:", loginError);
+          document.body.innerHTML = "<h2>Login failed. Please refresh and try again.</h2>";
+          return;
+        }
       }
 
-      const account = accounts[0];
-
       try {
-        const tokenResponse = await msalInstance.acquireTokenSilent({ scopes, account });
+        const tokenResponse = await msalInstance.acquireTokenPopup({ scopes, account });
         accessToken = tokenResponse.accessToken;
 
         const res = await fetch("https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile", {
@@ -94,10 +99,10 @@
         if (!res.ok) throw new Error("Failed to fetch profile");
 
         const profile = await res.json();
-        document.getElementById("email").textContent = profile.email;
-        document.getElementById("name").textContent = profile.name;
-        document.getElementById("country").textContent = profile.country;
-        document.getElementById("phone").textContent = profile.phone;
+        document.getElementById("email").textContent = profile.email || "";
+        document.getElementById("name").textContent = profile.name || "";
+        document.getElementById("country").textContent = profile.country || "";
+        document.getElementById("phone").textContent = profile.phone || "";
 
       } catch (err) {
         console.error("Error loading dashboard:", err);
@@ -114,8 +119,5 @@
 
     loadDashboard();
   </script>
-  <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
-<script src="dashboard.js"></script>
-
 </body>
 </html>
