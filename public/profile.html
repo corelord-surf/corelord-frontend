@@ -55,6 +55,8 @@
       text-align: center;
     }
   </style>
+
+  <!-- ✅ MSAL library must load before your JS code -->
   <script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
 </head>
 <body>
@@ -76,6 +78,7 @@
   </form>
   <div id="message"></div>
 
+  <!-- ✅ Your code script goes at the bottom to ensure msal is defined -->
   <script>
     const msalConfig = {
       auth: {
@@ -94,7 +97,7 @@
 
     async function initialize() {
       try {
-        await msalInstance.initialize(); // Ensure MSAL is fully initialised
+        await msalInstance.initialize();
 
         const accounts = msalInstance.getAllAccounts();
         if (accounts.length === 0) {
@@ -142,7 +145,6 @@
         }
 
         document.getElementById("message").innerText = "Profile created successfully!";
-        // Future enhancement: redirect to dashboard or surf settings page
       } catch (error) {
         console.error("Error submitting profile", error);
         document.getElementById("message").innerText = "Failed to submit profile.";
