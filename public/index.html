@@ -61,12 +61,11 @@
 
   <button id="signOutBtn">Sign Out</button>
 
-  <!-- Load MSAL from reliable CDN -->
+  <!-- Load MSAL from jsDelivr CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.0.0/lib/msal-browser.min.js"></script>
 
-  <!-- Initialise MSAL and bind auth buttons -->
   <script>
-    window.onload = function () {
+    window.onload = async function () {
       const msalConfig = {
         auth: {
           clientId: "7258dcfa-e901-4077-8fba-224fbc595e4",
@@ -80,6 +79,7 @@
       };
 
       const msalInstance = new msal.PublicClientApplication(msalConfig);
+      await msalInstance.initialize(); // Required in MSAL v3+
 
       async function signIn() {
         try {
@@ -111,7 +111,7 @@
         msalInstance.logoutPopup(logoutRequest);
       }
 
-      // Wire up buttons
+      // Hook up buttons
       document.getElementById("signInBtn").onclick = signIn;
       document.getElementById("signUpBtn").onclick = signUp;
       document.getElementById("signOutBtn").onclick = signOut;
