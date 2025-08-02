@@ -1,0 +1,5 @@
+{
+  "globalHeaders": {
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' https://alcdn.msauth.net; connect-src 'self' https://login.microsoftonline.com; style-src 'self' 'unsafe-inline';"
+  }
+}
