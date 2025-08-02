@@ -89,27 +89,36 @@
     };
 
     const msalInstance = new msal.PublicClientApplication(msalConfig);
+    let account;
     let accessToken;
 
-    async function initialize() {
+    async function handleAuth() {
       try {
-        const currentAccounts = msalInstance.getAllAccounts();
-        if (currentAccounts.length === 0) {
-          await msalInstance.loginRedirect({ scopes: ["openid", "profile", "email"] });
-          return;
+        const result = await msalInstance.handleRedirectPromise();
+
+        if (result !== null) {
+          account = result.account;
+        } else {
+          const currentAccounts = msalInstance.getAllAccounts();
+          if (currentAccounts.length === 0) {
+            msalInstance.loginRedirect({ scopes: ["openid", "profile", "email"] });
+            return;
+          } else {
+            account = currentAccounts[0];
+          }
         }
 
-        const account = currentAccounts[0];
         document.getElementById("email").value = account.username;
 
-        const tokenResponse = await msalInstance.acquireTokenRedirect({
+        const tokenResponse = await msalInstance.acquireTokenSilent({
           scopes: ["openid", "profile", "email"],
           account: account
         });
 
         accessToken = tokenResponse.accessToken;
-      } catch (err) {
-        console.error("Authentication failed", err);
+
+      } catch (error) {
+        console.error("Authentication error:", error);
         document.getElementById("message").innerText = "Authentication failed.";
       }
     }
@@ -134,23 +143,16 @@
           body: JSON.stringify(formData)
         });
 
-        if (!response.ok) {
-          throw new Error("Submission failed");
-        }
+        if (!response.ok) throw new Error("Profile submission failed");
 
         document.getElementById("message").innerText = "Profile created successfully!";
-      } catch (error) {
-        console.error("Error submitting profile", error);
+      } catch (err) {
+        console.error("Submission error:", err);
         document.getElementById("message").innerText = "Failed to submit profile.";
       }
     });
 
-    msalInstance.handleRedirectPromise()
-      .then(() => initialize())
-      .catch(err => {
-        console.error("Redirect error", err);
-        document.getElementById("message").innerText = "Authentication failed.";
-      });
+    handleAuth();
   </script>
 </body>
 </html>
