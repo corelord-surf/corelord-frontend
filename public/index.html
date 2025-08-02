@@ -56,11 +56,10 @@
 
   <button id="signOutBtn" onclick="signOut()">Sign Out</button>
 
-  <!-- Load MSAL from CDN FIRST -->
+  <!-- Load MSAL.js from CDN -->
   <script src="https://alcdn.msauth.net/browser/msal-browser.min.js"></script>
 
-
-  <!-- Then run your app script AFTER MSAL is loaded -->
+  <!-- Core authentication logic -->
   <script>
     const msalConfig = {
       auth: {
