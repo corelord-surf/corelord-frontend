@@ -73,21 +73,19 @@
     let accessToken;
 
     async function loadDashboard() {
-      let account = msalInstance.getAllAccounts()[0];
-
-      if (!account) {
-        try {
-          const loginResponse = await msalInstance.loginPopup({ scopes });
-          account = loginResponse.account;
-        } catch (loginError) {
-          console.error("Login failed:", loginError);
-          document.body.innerHTML = "<h2>Login failed. Please refresh and try again.</h2>";
-          return;
-        }
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length === 0) {
+        msalInstance.loginRedirect({ scopes });
+        return;
       }
 
+      const account = accounts[0];
+
       try {
-        const tokenResponse = await msalInstance.acquireTokenPopup({ scopes, account });
+        const tokenResponse = await msalInstance.acquireTokenRedirect({
+          scopes,
+          account
+        });
         accessToken = tokenResponse.accessToken;
 
         const res = await fetch("https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile", {
@@ -99,10 +97,10 @@
         if (!res.ok) throw new Error("Failed to fetch profile");
 
         const profile = await res.json();
-        document.getElementById("email").textContent = profile.email || "";
-        document.getElementById("name").textContent = profile.name || "";
-        document.getElementById("country").textContent = profile.country || "";
-        document.getElementById("phone").textContent = profile.phone || "";
+        document.getElementById("email").textContent = profile.email;
+        document.getElementById("name").textContent = profile.name;
+        document.getElementById("country").textContent = profile.country;
+        document.getElementById("phone").textContent = profile.phone;
 
       } catch (err) {
         console.error("Error loading dashboard:", err);
@@ -117,7 +115,11 @@
       msalInstance.logoutRedirect(logoutRequest);
     });
 
-    loadDashboard();
+    msalInstance.handleRedirectPromise().then(() => {
+      loadDashboard();
+    }).catch((error) => {
+      console.error("Redirect handling error:", error);
+    });
   </script>
 </body>
 </html>
