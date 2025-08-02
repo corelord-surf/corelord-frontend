@@ -15,7 +15,6 @@
       justify-content: center;
       height: 100vh;
       margin: 0;
-      padding: 0;
     }
 
     h1 {
@@ -94,27 +93,23 @@
 
     async function initialize() {
       try {
-        const accounts = msalInstance.getAllAccounts();
-
-        let account = accounts[0];
-
-        if (!account) {
-          const loginResponse = await msalInstance.loginPopup({
-            scopes: ["openid", "profile", "email"]
-          });
-          account = loginResponse.account;
+        const currentAccounts = msalInstance.getAllAccounts();
+        if (currentAccounts.length === 0) {
+          await msalInstance.loginRedirect({ scopes: ["openid", "profile", "email"] });
+          return;
         }
 
+        const account = currentAccounts[0];
         document.getElementById("email").value = account.username;
 
-        const tokenResponse = await msalInstance.acquireTokenPopup({
+        const tokenResponse = await msalInstance.acquireTokenRedirect({
           scopes: ["openid", "profile", "email"],
           account: account
         });
 
         accessToken = tokenResponse.accessToken;
       } catch (err) {
-        console.error("Authentication error", err);
+        console.error("Authentication failed", err);
         document.getElementById("message").innerText = "Authentication failed.";
       }
     }
@@ -150,7 +145,12 @@
       }
     });
 
-    initialize();
+    msalInstance.handleRedirectPromise()
+      .then(() => initialize())
+      .catch(err => {
+        console.error("Redirect error", err);
+        document.getElementById("message").innerText = "Authentication failed.";
+      });
   </script>
 </body>
 </html>
