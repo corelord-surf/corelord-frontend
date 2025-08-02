@@ -56,9 +56,10 @@
     }
   </style>
 
-  <!-- ✅ MSAL library must load before your JS code -->
+  <!-- Important: This must load before your code uses `msal` -->
   <script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
 </head>
+
 <body>
   <h1>Create Your Profile</h1>
   <form id="profileForm">
@@ -78,7 +79,7 @@
   </form>
   <div id="message"></div>
 
-  <!-- ✅ Your code script goes at the bottom to ensure msal is defined -->
+  <!-- App logic loaded AFTER msal -->
   <script>
     const msalConfig = {
       auth: {
@@ -145,6 +146,7 @@
         }
 
         document.getElementById("message").innerText = "Profile created successfully!";
+        // You can redirect here if needed
       } catch (error) {
         console.error("Error submitting profile", error);
         document.getElementById("message").innerText = "Failed to submit profile.";
