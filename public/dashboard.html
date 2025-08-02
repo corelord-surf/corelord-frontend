@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoreLord Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0d1117;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .profile {
+      margin-top: 2rem;
+      background-color: #161b22;
+      padding: 1.5rem;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .profile p {
+      margin: 0.5rem 0;
+    }
+
+    #signOutBtn {
+      margin-top: 2rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #ffffff;
+      color: #0d1117;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome to your CoreLord Dashboard</h1>
+  <div class="profile" id="profileContainer">
+    <p><strong>Email:</strong> <span id="email"></span></p>
+    <p><strong>Name:</strong> <span id="name"></span></p>
+    <p><strong>Country:</strong> <span id="country"></span></p>
+    <p><strong>Phone:</strong> <span id="phone"></span></p>
+  </div>
+  <button id="signOutBtn">Sign Out</button>
+
+  <script src="https://alcdn.msauth.net/browser/2.38.2/js/msal-browser.min.js"></script>
+  <script>
+    const msalConfig = {
+      auth: {
+        clientId: "7258cfca-e901-4077-8fba-224f8bc595e4",
+        authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
+        redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net/dashboard.html"
+      },
+      cache: {
+        cacheLocation: "localStorage",
+        storeAuthStateInCookie: false
+      }
+    };
+
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+    const scopes = ["openid", "profile", "email", "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation"];
+    let accessToken;
+
+    async function loadDashboard() {
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length === 0) {
+        msalInstance.loginRedirect({ scopes });
+        return;
+      }
+
+      const account = accounts[0];
+
+      try {
+        const tokenResponse = await msalInstance.acquireTokenSilent({ scopes, account });
+        accessToken = tokenResponse.accessToken;
+
+        const res = await fetch("https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch profile");
+
+        const profile = await res.json();
+        document.getElementById("email").textContent = profile.email;
+        document.getElementById("name").textContent = profile.name;
+        document.getElementById("country").textContent = profile.country;
+        document.getElementById("phone").textContent = profile.phone;
+
+      } catch (err) {
+        console.error("Error loading dashboard:", err);
+        document.body.innerHTML = "<h2>Session expired or access denied. Please <a href='/'>sign in again</a>.</h2>";
+      }
+    }
+
+    document.getElementById("signOutBtn").addEventListener("click", () => {
+      const logoutRequest = {
+        account: msalInstance.getAllAccounts()[0]
+      };
+      msalInstance.logoutRedirect(logoutRequest);
+    });
+
+    loadDashboard();
+  </script>
+</body>
+</html>
