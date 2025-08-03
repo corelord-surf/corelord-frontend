@@ -27,10 +27,10 @@ async function getProfile(token) {
     if (!response.ok) throw new Error("API call failed");
 
     const data = await response.json();
-    document.getElementById("name").textContent = data.name;
-    document.getElementById("email").textContent = data.email;
-    document.getElementById("phone").textContent = data.phone;
-    document.getElementById("country").textContent = data.country;
+    document.getElementById("name").textContent = data.name || "-";
+    document.getElementById("email").textContent = data.email || "-";
+    document.getElementById("phone").textContent = data.phone || "-";
+    document.getElementById("country").textContent = data.country || "-";
     document.getElementById("profile").style.display = "block";
   } catch (err) {
     console.error("Profile fetch failed:", err);
@@ -40,35 +40,37 @@ async function getProfile(token) {
 
 async function acquireTokenAndLoadProfile() {
   const accounts = msalInstance.getAllAccounts();
-  if (accounts.length === 0) return redirectToLogin();
+  if (accounts.length < 1) {
+    msalInstance.loginRedirect(loginRequest);
+    return;
+  }
 
   try {
     const result = await msalInstance.acquireTokenSilent({
       ...loginRequest,
       account: accounts[0]
     });
-    getProfile(result.accessToken);
-  } catch (silentError) {
-    console.warn("Silent token failed. Trying popup...", silentError);
-    try {
-      const result = await msalInstance.acquireTokenPopup(loginRequest);
-      getProfile(result.accessToken);
-    } catch (popupError) {
-      console.error("Dashboard error:", popupError);
-      document.getElementById("errorMessage").style.display = "block";
-    }
+    await getProfile(result.accessToken);
+  } catch (error) {
+    console.warn("Silent token failed. Redirecting to login.", error);
+    msalInstance.loginRedirect(loginRequest);
   }
-}
-
-function redirectToLogin() {
-  window.location.href = "index.html";
 }
 
 function signOut() {
   const accounts = msalInstance.getAllAccounts();
   if (accounts.length > 0) {
-    msalInstance.logout({ account: accounts[0] });
+    msalInstance.logoutRedirect({ account: accounts[0] });
   }
 }
 
-window.addEventListener("DOMContentLoaded", acquireTokenAndLoadProfile);
+window.addEventListener("DOMContentLoaded", () => {
+  msalInstance.handleRedirectPromise()
+    .then(() => {
+      acquireTokenAndLoadProfile();
+    })
+    .catch(err => {
+      console.error("Redirect handling failed", err);
+      document.getElementById("errorMessage").style.display = "block";
+    });
+});
