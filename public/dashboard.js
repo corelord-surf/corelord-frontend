@@ -13,49 +13,52 @@ const msalConfig = {
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 const scopes = ["openid", "profile", "email", "api://2070bf8a-ea72-43e3-8c90-b3a39e585f5c/user_impersonation"];
 
-async function ensureLoggedInAndLoadProfile() {
-  let account = null;
-  let token = null;
-
+async function loadDashboard(account, token) {
   try {
-    const accounts = msalInstance.getAllAccounts();
-    if (accounts.length === 0) {
-      const loginResult = await msalInstance.loginPopup({ scopes });
-      account = loginResult.account;
-    } else {
-      account = accounts[0];
-    }
-
-    try {
-      const tokenResponse = await msalInstance.acquireTokenSilent({ scopes, account });
-      token = tokenResponse.accessToken;
-    } catch (silentErr) {
-      console.warn("Silent token failed. Trying popup...");
-      const popupResponse = await msalInstance.acquireTokenPopup({ scopes });
-      token = popupResponse.accessToken;
-    }
-
     const res = await fetch("https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile", {
       headers: {
         Authorization: `Bearer ${token}`
       }
     });
 
-    if (!res.ok) throw new Error("Failed to fetch profile");
+    if (!res.ok) throw new Error("Profile fetch failed");
 
     const profile = await res.json();
+
     document.getElementById("email").textContent = profile.email || "";
     document.getElementById("name").textContent = profile.name || "";
     document.getElementById("country").textContent = profile.country || "";
     document.getElementById("phone").textContent = profile.phone || "";
-
   } catch (err) {
-    console.error("Dashboard error:", err);
+    console.error("Error loading dashboard:", err);
     document.body.innerHTML = "<h2>Session expired or access denied. Please <a href='/'>sign in again</a>.</h2>";
   }
 }
 
-ensureLoggedInAndLoadProfile();
+msalInstance.handleRedirectPromise().then(async (result) => {
+  let account = null;
+  if (result && result.account) {
+    account = result.account;
+  } else {
+    const accounts = msalInstance.getAllAccounts();
+    if (accounts.length === 0) {
+      msalInstance.loginRedirect({ scopes });
+      return;
+    }
+    account = accounts[0];
+  }
+
+  try {
+    const response = await msalInstance.acquireTokenSilent({ scopes, account });
+    await loadDashboard(account, response.accessToken);
+  } catch (err) {
+    console.warn("Silent token failed, redirecting to re-authenticate");
+    msalInstance.acquireTokenRedirect({ scopes });
+  }
+}).catch(err => {
+  console.error("Redirect error:", err);
+  document.body.innerHTML = "<h2>Authentication error. Please <a href='/'>sign in again</a>.</h2>";
+});
 
 document.getElementById("signOutBtn").addEventListener("click", () => {
   const logoutRequest = {
