@@ -28,7 +28,7 @@ async function getProfile(token) {
 
     const data = await response.json();
     document.getElementById("name").textContent = data.FullName || "N/A";
-    document.getElementById("email").textContent = data.Email || msalInstance.getAllAccounts()[0]?.username || "N/A";
+    document.getElementById("email").textContent = msalInstance.getAllAccounts()[0]?.username || "N/A";
     document.getElementById("phone").textContent = data.PhoneNumber || "N/A";
     document.getElementById("country").textContent = data.Country || "N/A";
     document.getElementById("profile").style.display = "block";
