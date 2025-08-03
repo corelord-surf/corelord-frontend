@@ -1,6 +1,6 @@
 const msalConfig = {
   auth: {
-    clientId: "7258cfca-e901-4077-8fba-224f8bc595e4",
+    clientId: "2070bf8a-ea72-43e3-8c90-b3a39e585f5c", // <-- consistent clientId
     authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
     redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net/dashboard.html"
   },
@@ -12,27 +12,36 @@ const msalConfig = {
 
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 const scopes = ["openid", "profile", "email", "api://2070bf8a-ea72-43e3-8c90-b3a39e585f5c/user_impersonation"];
-let accessToken;
 
-async function loadDashboard() {
-  const accounts = msalInstance.getAllAccounts();
-  if (accounts.length === 0) {
-    msalInstance.loginRedirect({ scopes });
-    return;
-  }
-
-  const account = accounts[0];
-
+async function getAccessToken(account) {
   try {
     const tokenResponse = await msalInstance.acquireTokenSilent({
       scopes,
       account
     });
-    accessToken = tokenResponse.accessToken;
+    return tokenResponse.accessToken;
+  } catch (err) {
+    console.error("Silent token error:", err);
+    if (err instanceof msal.InteractionRequiredAuthError) {
+      return msalInstance.acquireTokenPopup({ scopes });
+    }
+    throw err;
+  }
+}
 
+async function loadDashboard() {
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length === 0) {
+    return msalInstance.loginRedirect({ scopes });
+  }
+
+  const account = accounts[0];
+  const token = await getAccessToken(account);
+
+  try {
     const res = await fetch("https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile", {
       headers: {
-        Authorization: `Bearer ${accessToken}`
+        Authorization: `Bearer ${token}`
       }
     });
 
