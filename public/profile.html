@@ -89,39 +89,29 @@
     };
 
     const msalInstance = new msal.PublicClientApplication(msalConfig);
-    let account;
-    let accessToken;
     const scopes = ["openid", "profile", "email", "api://2070bf8a-ea72-43e3-8c90-b3a39e585f5c/user_impersonation"];
+    let accessToken;
+    let account;
 
     async function handleAuth() {
       try {
-        const result = await msalInstance.handleRedirectPromise();
-
-        if (result !== null) {
-          account = result.account;
+        const accounts = msalInstance.getAllAccounts();
+        if (accounts.length === 0) {
+          const loginResponse = await msalInstance.loginPopup({ scopes });
+          account = loginResponse.account;
         } else {
-          const currentAccounts = msalInstance.getAllAccounts();
-          if (currentAccounts.length === 0) {
-            msalInstance.loginRedirect({ scopes });
-            return;
-          } else {
-            account = currentAccounts[0];
-          }
+          account = accounts[0];
         }
 
         document.getElementById("email").value = account.username;
 
         try {
-          const tokenResponse = await msalInstance.acquireTokenSilent({
-            scopes,
-            account
-          });
-
+          const tokenResponse = await msalInstance.acquireTokenSilent({ scopes, account });
           accessToken = tokenResponse.accessToken;
         } catch (silentError) {
           if (silentError instanceof msal.InteractionRequiredAuthError) {
-            await msalInstance.acquireTokenRedirect({ scopes });
-            return;
+            const popupResponse = await msalInstance.acquireTokenPopup({ scopes });
+            accessToken = popupResponse.accessToken;
           } else {
             throw silentError;
           }

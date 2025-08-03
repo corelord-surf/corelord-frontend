@@ -1,6 +1,6 @@
 const msalConfig = {
   auth: {
-    clientId: "2070bf8a-ea72-43e3-8c90-b3a39e585f5c", // <-- consistent clientId
+    clientId: "2070bf8a-ea72-43e3-8c90-b3a39e585f5c",
     authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
     redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net/dashboard.html"
   },
@@ -15,30 +15,39 @@ const scopes = ["openid", "profile", "email", "api://2070bf8a-ea72-43e3-8c90-b3a
 
 async function getAccessToken(account) {
   try {
-    const tokenResponse = await msalInstance.acquireTokenSilent({
-      scopes,
-      account
-    });
-    return tokenResponse.accessToken;
-  } catch (err) {
-    console.error("Silent token error:", err);
-    if (err instanceof msal.InteractionRequiredAuthError) {
-      return msalInstance.acquireTokenPopup({ scopes });
+    const response = await msalInstance.acquireTokenSilent({ scopes, account });
+    return response.accessToken;
+  } catch (error) {
+    console.warn("Silent token failed. Falling back to popup.");
+    if (error instanceof msal.InteractionRequiredAuthError) {
+      const popupResponse = await msalInstance.acquireTokenPopup({ scopes });
+      return popupResponse.accessToken;
+    } else {
+      throw error;
     }
-    throw err;
   }
 }
 
 async function loadDashboard() {
+  let account = null;
   const accounts = msalInstance.getAllAccounts();
+
   if (accounts.length === 0) {
-    return msalInstance.loginRedirect({ scopes });
+    try {
+      const loginResponse = await msalInstance.loginPopup({ scopes });
+      account = loginResponse.account;
+    } catch (loginError) {
+      console.error("Login popup failed", loginError);
+      document.body.innerHTML = "<h2>Authentication required. Please <a href='/'>sign in</a>.</h2>";
+      return;
+    }
+  } else {
+    account = accounts[0];
   }
 
-  const account = accounts[0];
-  const token = await getAccessToken(account);
-
   try {
+    const token = await getAccessToken(account);
+
     const res = await fetch("https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile", {
       headers: {
         Authorization: `Bearer ${token}`
@@ -59,12 +68,7 @@ async function loadDashboard() {
   }
 }
 
-msalInstance.handleRedirectPromise()
-  .then(loadDashboard)
-  .catch(error => {
-    console.error("Redirect handling error:", error);
-    document.body.innerHTML = "<h2>Authentication error. Please <a href='/'>sign in again</a>.</h2>";
-  });
+loadDashboard();
 
 document.getElementById("signOutBtn").addEventListener("click", () => {
   const logoutRequest = {
