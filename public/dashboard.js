@@ -27,6 +27,8 @@ async function getProfile(token) {
     if (!response.ok) throw new Error("API call failed");
 
     const data = await response.json();
+
+    // Updated to match backend casing
     document.getElementById("name").textContent = data.FullName || "N/A";
     document.getElementById("email").textContent = msalInstance.getAllAccounts()[0]?.username || "N/A";
     document.getElementById("phone").textContent = data.PhoneNumber || "N/A";
