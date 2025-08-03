@@ -78,7 +78,7 @@
   <script>
     const msalConfig = {
       auth: {
-        clientId: "2070bf8a-ea72-43e3-8c90-b3a39e585f5c",
+        clientId: "7258cfca-e901-4077-8fba-224f8bc595e4", // frontend app registration
         authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
         redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net/profile.html"
       },
@@ -88,33 +88,39 @@
       }
     };
 
+    const loginRequest = {
+      scopes: [
+        "openid",
+        "profile",
+        "email",
+        "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation"
+      ]
+    };
+
     const msalInstance = new msal.PublicClientApplication(msalConfig);
-    const scopes = ["openid", "profile", "email", "api://2070bf8a-ea72-43e3-8c90-b3a39e585f5c/user_impersonation"];
     let accessToken;
-    let account;
 
     async function handleAuth() {
       try {
         const accounts = msalInstance.getAllAccounts();
-        if (accounts.length === 0) {
-          const loginResponse = await msalInstance.loginPopup({ scopes });
-          account = loginResponse.account;
-        } else {
+        let account;
+
+        if (accounts.length > 0) {
           account = accounts[0];
+        } else {
+          const loginResponse = await msalInstance.loginPopup(loginRequest);
+          account = loginResponse.account;
         }
 
         document.getElementById("email").value = account.username;
 
         try {
-          const tokenResponse = await msalInstance.acquireTokenSilent({ scopes, account });
+          const tokenResponse = await msalInstance.acquireTokenSilent({ ...loginRequest, account });
           accessToken = tokenResponse.accessToken;
         } catch (silentError) {
-          if (silentError instanceof msal.InteractionRequiredAuthError) {
-            const popupResponse = await msalInstance.acquireTokenPopup({ scopes });
-            accessToken = popupResponse.accessToken;
-          } else {
-            throw silentError;
-          }
+          console.warn("Silent token failed:", silentError);
+          const popupResponse = await msalInstance.acquireTokenPopup(loginRequest);
+          accessToken = popupResponse.accessToken;
         }
       } catch (error) {
         console.error("Authentication error:", error);
@@ -148,14 +154,13 @@
         setTimeout(() => {
           window.location.href = "/dashboard.html";
         }, 1500);
-
       } catch (err) {
         console.error("Submission error:", err);
         document.getElementById("message").innerText = "Failed to submit profile.";
       }
     });
 
-    handleAuth();
+    window.addEventListener("DOMContentLoaded", handleAuth);
   </script>
 </body>
 </html>
