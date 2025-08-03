@@ -13,40 +13,27 @@ const msalConfig = {
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 const scopes = ["openid", "profile", "email", "api://2070bf8a-ea72-43e3-8c90-b3a39e585f5c/user_impersonation"];
 
-async function getAccessToken(account) {
-  try {
-    const response = await msalInstance.acquireTokenSilent({ scopes, account });
-    return response.accessToken;
-  } catch (error) {
-    console.warn("Silent token failed. Falling back to popup.");
-    if (error instanceof msal.InteractionRequiredAuthError) {
-      const popupResponse = await msalInstance.acquireTokenPopup({ scopes });
-      return popupResponse.accessToken;
-    } else {
-      throw error;
-    }
-  }
-}
-
-async function loadDashboard() {
+async function ensureLoggedInAndLoadProfile() {
   let account = null;
-  const accounts = msalInstance.getAllAccounts();
-
-  if (accounts.length === 0) {
-    try {
-      const loginResponse = await msalInstance.loginPopup({ scopes });
-      account = loginResponse.account;
-    } catch (loginError) {
-      console.error("Login popup failed", loginError);
-      document.body.innerHTML = "<h2>Authentication required. Please <a href='/'>sign in</a>.</h2>";
-      return;
-    }
-  } else {
-    account = accounts[0];
-  }
+  let token = null;
 
   try {
-    const token = await getAccessToken(account);
+    const accounts = msalInstance.getAllAccounts();
+    if (accounts.length === 0) {
+      const loginResult = await msalInstance.loginPopup({ scopes });
+      account = loginResult.account;
+    } else {
+      account = accounts[0];
+    }
+
+    try {
+      const tokenResponse = await msalInstance.acquireTokenSilent({ scopes, account });
+      token = tokenResponse.accessToken;
+    } catch (silentErr) {
+      console.warn("Silent token failed. Trying popup...");
+      const popupResponse = await msalInstance.acquireTokenPopup({ scopes });
+      token = popupResponse.accessToken;
+    }
 
     const res = await fetch("https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile", {
       headers: {
@@ -63,12 +50,12 @@ async function loadDashboard() {
     document.getElementById("phone").textContent = profile.phone || "";
 
   } catch (err) {
-    console.error("Error loading dashboard:", err);
+    console.error("Dashboard error:", err);
     document.body.innerHTML = "<h2>Session expired or access denied. Please <a href='/'>sign in again</a>.</h2>";
   }
 }
 
-loadDashboard();
+ensureLoggedInAndLoadProfile();
 
 document.getElementById("signOutBtn").addEventListener("click", () => {
   const logoutRequest = {
