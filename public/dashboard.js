@@ -27,10 +27,10 @@ async function getProfile(token) {
     if (!response.ok) throw new Error("API call failed");
 
     const data = await response.json();
-    document.getElementById("name").textContent = data.name;
-    document.getElementById("email").textContent = data.email;
-    document.getElementById("phone").textContent = data.phone;
-    document.getElementById("country").textContent = data.country;
+    document.getElementById("name").textContent = data.FullName || "N/A";
+    document.getElementById("email").textContent = data.Email || msalInstance.getAllAccounts()[0]?.username || "N/A";
+    document.getElementById("phone").textContent = data.PhoneNumber || "N/A";
+    document.getElementById("country").textContent = data.Country || "N/A";
     document.getElementById("profile").style.display = "block";
   } catch (err) {
     console.error("Profile fetch failed:", err);
