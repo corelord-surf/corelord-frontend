@@ -6,48 +6,18 @@
   <title>CoreLord - Splash</title>
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      background: #0d1117;
-      color: #ffffff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      text-align: center;
-      flex-direction: column;
+      margin: 0; padding: 0; background: #0d1117; color: #ffffff;
+      font-family: Arial, sans-serif; display: flex; align-items: center;
+      justify-content: center; height: 100vh; text-align: center; flex-direction: column;
     }
-
-    h1 {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-    }
-
-    p {
-      font-size: 1.25rem;
-      margin-bottom: 2rem;
-    }
-
-    .auth-buttons {
-      display: flex;
-      gap: 1rem;
-    }
-
+    h1 { font-size: 3rem; margin-bottom: 1rem; }
+    p { font-size: 1.25rem; margin-bottom: 2rem; }
+    .auth-buttons { display: flex; gap: 1rem; }
     .auth-buttons button {
-      padding: 0.75rem 1.25rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+      padding: 0.75rem 1.25rem; font-size: 1rem; border: none; border-radius: 6px; cursor: pointer;
     }
-
-    #signOutBtn {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      padding: 0.5rem 1rem;
-    }
+    #signOutBtn { position: absolute; top: 1rem; right: 1rem; padding: 0.5rem 1rem; }
+    #msg { opacity: .8; margin-top: 1rem; font-size: .95rem; }
   </style>
 </head>
 <body>
@@ -60,61 +30,90 @@
   </div>
 
   <button id="signOutBtn">Sign Out</button>
+  <div id="msg"></div>
 
+  <!-- MSAL (v3 works; v2 also fine). Keep one. -->
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.0.0/lib/msal-browser.min.js"></script>
+
   <script>
-    window.onload = async function () {
-      const msalConfig = {
-        auth: {
-          clientId: "7258cfca-e901-4077-8fba-224f8bc595e4", // ✅ correct frontend client ID
-          authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
-          redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net"
-        },
-        cache: {
-          cacheLocation: "localStorage",
-          storeAuthStateInCookie: false
-        }
-      };
+    // ---- Config ----
+    const TENANT = "d048d6e2-6e9f-4af0-afcf-58a5ad036480";
+    const CLIENT_ID = "7258cfca-e901-4077-8fba-224f8bc595e4"; // Frontend SPA app
+    const API_SCOPE = "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation";
+    const API_PROFILE = "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile";
+    const REDIRECT_URI = "https://calm-coast-025fe8203.2.azurestaticapps.net";
 
-      const msalInstance = new msal.PublicClientApplication(msalConfig);
-      await msalInstance.initialize();
-
-      async function signIn() {
-        try {
-          const result = await msalInstance.loginPopup({
-            scopes: ["openid", "profile", "email"]
-          });
-          console.log("Sign-in successful:", result.account);
-          window.location.href = "/profile.html";
-        } catch (error) {
-          console.error("Sign-in error:", error);
-        }
-      }
-
-      async function signUp() {
-        try {
-          const result = await msalInstance.loginPopup({
-            scopes: ["openid", "profile", "email"],
-            prompt: "select_account"
-          });
-          console.log("Sign-up successful:", result.account);
-          window.location.href = "/profile.html";
-        } catch (error) {
-          console.error("Sign-up error:", error);
-        }
-      }
-
-      function signOut() {
-        const logoutRequest = {
-          account: msalInstance.getAllAccounts()[0]
-        };
-        msalInstance.logoutPopup(logoutRequest);
-      }
-
-      document.getElementById("signInBtn").onclick = signIn;
-      document.getElementById("signUpBtn").onclick = signUp;
-      document.getElementById("signOutBtn").onclick = signOut;
+    const msalConfig = {
+      auth: {
+        clientId: CLIENT_ID,
+        authority: `https://login.microsoftonline.com/${TENANT}`,
+        redirectUri: REDIRECT_URI
+      },
+      cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
     };
+
+    const loginRequest = {
+      scopes: ["openid", "profile", "email", API_SCOPE]
+    };
+
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+    const $msg = (t) => { const el = document.getElementById("msg"); if (el) el.textContent = t || ""; };
+
+    async function getApiToken(account) {
+      try {
+        return await msalInstance.acquireTokenSilent({ ...loginRequest, account });
+      } catch {
+        return await msalInstance.acquireTokenPopup(loginRequest);
+      }
+    }
+
+    async function routeAfterLogin() {
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length === 0) return; // wait for user to click Sign In
+
+      $msg("Checking your profile…");
+      const { accessToken } = await getApiToken(accounts[0]);
+
+      const resp = await fetch(API_PROFILE, { headers: { Authorization: `Bearer ${accessToken}` } });
+
+      if (resp.status === 200) {
+        window.location.href = "dashboard.html";
+      } else if (resp.status === 404) {
+        window.location.href = "profile.html";
+      } else {
+        // unexpected error → safe default
+        window.location.href = "profile.html";
+      }
+    }
+
+    async function signIn(promptMode) {
+      try {
+        const result = await msalInstance.loginPopup({
+          ...loginRequest,
+          ...(promptMode ? { prompt: promptMode } : {})
+        });
+        console.log("Signed in as:", result.account?.username);
+        await routeAfterLogin();
+      } catch (e) {
+        console.error("Sign-in error:", e);
+        $msg("Sign-in failed. Please try again.");
+      }
+    }
+
+    function signOut() {
+      const account = msalInstance.getAllAccounts()[0];
+      if (!account) return;
+      msalInstance.logoutPopup({ account });
+    }
+
+    // Wire up buttons
+    document.getElementById("signInBtn").onclick = () => signIn();                // normal
+    document.getElementById("signUpBtn").onclick  = () => signIn("select_account"); // choose account
+    document.getElementById("signOutBtn").onclick = signOut;
+
+    // Auto-route if already signed in
+    window.addEventListener("DOMContentLoaded", routeAfterLogin);
   </script>
 </body>
 </html>
