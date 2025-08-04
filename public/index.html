@@ -6,102 +6,115 @@
   <title>CoreLord - Splash</title>
   <style>
     html, body {
-      margin: 0; padding: 0; background: #0d1117; color: #ffffff;
-      font-family: Arial, sans-serif; display: flex; align-items: center;
-      justify-content: center; height: 100vh; text-align: center; flex-direction: column;
+      margin: 0;
+      padding: 0;
+      background: #0d1117;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      flex-direction: column;
     }
-    h1 { font-size: 3rem; margin-bottom: 1rem; }
-    p  { font-size: 1.25rem; margin-bottom: 2rem; }
-    .auth-buttons { display: flex; gap: 1rem; }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+
     .auth-buttons button {
-      padding: 0.75rem 1.25rem; font-size: 1rem;
-      border: none; border-radius: 6px; cursor: pointer;
+      padding: 0.75rem 1.25rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
     }
-    #signOutBtn { position: absolute; top: 1rem; right: 1rem; padding: 0.5rem 1rem; }
-    #msg { margin-top: 1rem; color: #ffb4b4; min-height: 1.25rem; }
+
+    #signOutBtn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.5rem 1rem;
+    }
   </style>
 </head>
 <body>
-  <button id="signOutBtn">Sign Out</button>
-
   <h1>Welcome to CoreLord</h1>
-  <p>Surf smarter. Plan your week with precision — public site.</p>
+  <p>Surf smarter. Plan your week with precision – public site.</p>
 
   <div class="auth-buttons">
     <button id="signInBtn">Sign In</button>
     <button id="signUpBtn">Sign Up</button>
   </div>
 
-  <div id="msg"></div>
+  <button id="signOutBtn">Sign Out</button>
 
-  <!-- Keep MSAL version consistent across the app -->
-  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.0.0/lib/msal-browser.min.js"></script>
   <script>
-    (async () => {
-      const FRONTEND_URL = "https://calm-coast-025fe8203.2.azurestaticapps.net";
-      const API_BASE     = "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net";
-
+    window.onload = async function () {
       const msalConfig = {
         auth: {
-          clientId: "7258cfca-e901-4077-8fba-224f8bc595e4",
+          clientId: "7258cfca-e901-4077-8fba-224f8bc595e4", // ✅ correct frontend client ID
           authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
-          redirectUri: FRONTEND_URL
+          redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net"
         },
-        cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
-      };
-
-      const loginRequest = {
-        scopes: ["openid","profile","email","api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation"]
+        cache: {
+          cacheLocation: "localStorage",
+          storeAuthStateInCookie: false
+        }
       };
 
       const msalInstance = new msal.PublicClientApplication(msalConfig);
       await msalInstance.initialize();
 
-      const $ = (id) => document.getElementById(id);
-      const setMsg = (t) => { $("msg").textContent = t || ""; };
-
-      async function getToken() {
-        const account = msalInstance.getAllAccounts()[0];
-        if (!account) return null;
+      async function signIn() {
         try {
-          const r = await msalInstance.acquireTokenSilent({ ...loginRequest, account });
-          return r.accessToken;
-        } catch {
-          const r = await msalInstance.acquireTokenPopup(loginRequest);
-          return r.accessToken;
-        }
-      }
-
-      async function routeByProfile() {
-        try {
-          const token = await getToken();
-          if (!token) return; // user cancelled or not signed in
-          const resp = await fetch(`${API_BASE}/api/profile`, {
-            headers: { Authorization: `Bearer ${token}` }
+          const result = await msalInstance.loginPopup({
+            scopes: ["openid", "profile", "email"]
           });
-          if (resp.status === 200)       window.location.href = "/dashboard.html";
-          else if (resp.status === 404)  window.location.href = "/profile.html";
-          else                           setMsg(`Unexpected status: ${resp.status}`);
-        } catch (err) {
-          console.error("Routing error:", err);
-          setMsg("Sign-in failed. Please try again.");
+          console.log("Sign-in successful:", result.account);
+          window.location.href = "/profile.html";
+        } catch (error) {
+          console.error("Sign-in error:", error);
         }
       }
 
-      async function signIn()  { setMsg(""); await routeByProfile(); }
-      async function signUp()  { setMsg(""); await routeByProfile(); }
-      async function signOut() {
-        const account = msalInstance.getAllAccounts()[0];
-        if (account) await msalInstance.logoutPopup({ account });
+      async function signUp() {
+        try {
+          const result = await msalInstance.loginPopup({
+            scopes: ["openid", "profile", "email"],
+            prompt: "select_account"
+          });
+          console.log("Sign-up successful:", result.account);
+          window.location.href = "/profile.html";
+        } catch (error) {
+          console.error("Sign-up error:", error);
+        }
       }
 
-      $("signInBtn").onclick  = signIn;
-      $("signUpBtn").onclick  = signUp;
-      $("signOutBtn").onclick = signOut;
+      function signOut() {
+        const logoutRequest = {
+          account: msalInstance.getAllAccounts()[0]
+        };
+        msalInstance.logoutPopup(logoutRequest);
+      }
 
-      // Optional: auto-route if already signed in
-      // if (msalInstance.getAllAccounts().length > 0) routeByProfile();
-    })();
+      document.getElementById("signInBtn").onclick = signIn;
+      document.getElementById("signUpBtn").onclick = signUp;
+      document.getElementById("signOutBtn").onclick = signOut;
+    };
   </script>
 </body>
 </html>

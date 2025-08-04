@@ -6,23 +6,53 @@
   <title>CoreLord - Create Profile</title>
   <style>
     body {
-      font-family: Arial, sans-serif; background-color: #0d1117; color: #ffffff;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      height: 100vh; margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #0d1117;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
-    h1 { margin-bottom: 2rem; font-size: 2rem; }
-    form { display: flex; flex-direction: column; width: 300px; }
-    label { margin-top: 1rem; }
+
+    h1 {
+      margin-bottom: 2rem;
+      font-size: 2rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      width: 300px;
+    }
+
+    label {
+      margin-top: 1rem;
+    }
+
     input {
-      padding: 0.5rem; margin-top: 0.25rem; border-radius: 4px;
-      border: 1px solid #30363d; background:#0d1117; color:#fff;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      border-radius: 4px;
+      border: none;
     }
+
     button {
-      margin-top: 2rem; padding: 0.75rem; background-color: #ffffff;
-      color: #0d1117; border: none; border-radius: 4px; cursor: pointer;
+      margin-top: 2rem;
+      padding: 0.75rem;
+      background-color: #ffffff;
+      color: #0d1117;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
     }
-    #message { margin-top: 1.5rem; text-align: center; }
-    .ok { color:#8be499; } .err { color:#ffb4b4; }
+
+    #message {
+      margin-top: 1.5rem;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -44,95 +74,92 @@
   </form>
   <div id="message"></div>
 
-  <!-- Match MSAL version with the rest of the app -->
-  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+  <script src="https://alcdn.msauth.net/browser/2.38.2/js/msal-browser.min.js"></script>
   <script>
-    (async () => {
-      const FRONTEND_URL = "https://calm-coast-025fe8203.2.azurestaticapps.net";
-      const API_URL = "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile";
-
-      const msalConfig = {
-        auth: {
-          clientId: "7258cfca-e901-4077-8fba-224f8bc595e4",
-          authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
-          redirectUri: `${FRONTEND_URL}/profile.html`
-        },
-        cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
-      };
-
-      const loginRequest = {
-        scopes: ["openid","profile","email","api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation"]
-      };
-
-      const msalInstance = new msal.PublicClientApplication(msalConfig);
-      await msalInstance.initialize();
-
-      const $ = (id) => document.getElementById(id);
-      const setMsg = (t, cls) => { const m=$("message"); m.className=cls||""; m.textContent=t||""; };
-
-      // Acquire account & token
-      let account = msalInstance.getAllAccounts()[0];
-      if (!account) {
-        const loginResp = await msalInstance.loginPopup(loginRequest);
-        account = loginResp.account;
+    const msalConfig = {
+      auth: {
+        clientId: "7258cfca-e901-4077-8fba-224f8bc595e4", // frontend app registration
+        authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
+        redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net/profile.html"
+      },
+      cache: {
+        cacheLocation: "localStorage",
+        storeAuthStateInCookie: false
       }
-      $("email").value = account.username || "";
+    };
 
-      async function getToken() {
-        try {
-          const r = await msalInstance.acquireTokenSilent({ ...loginRequest, account });
-          return r.accessToken;
-        } catch {
-          const r = await msalInstance.acquireTokenPopup(loginRequest);
-          return r.accessToken;
-        }
-      }
+    const loginRequest = {
+      scopes: [
+        "openid",
+        "profile",
+        "email",
+        "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation"
+      ]
+    };
 
-      // If profile already exists, skip creation and go to dashboard
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+    let accessToken;
+
+    async function handleAuth() {
       try {
-        const token = await getToken();
-        const check = await fetch(API_URL, { headers: { Authorization: `Bearer ${token}` } });
-        if (check.status === 200) {
-          window.location.href = "/dashboard.html";
-          return;
-        }
-      } catch (e) {
-        // Ignore and allow form submission path
-        console.warn("Profile existence check skipped:", e);
-      }
+        const accounts = msalInstance.getAllAccounts();
+        let account;
 
-      // Submit handler
-      $("profileForm").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        setMsg("", "");
+        if (accounts.length > 0) {
+          account = accounts[0];
+        } else {
+          const loginResponse = await msalInstance.loginPopup(loginRequest);
+          account = loginResponse.account;
+        }
+
+        document.getElementById("email").value = account.username;
 
         try {
-          const token = await getToken();
-          const payload = {
-            name: $("name").value.trim(),
-            country: $("country").value.trim(),
-            phone: $("phone").value.trim()
-          };
-
-          const resp = await fetch(API_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
-          });
-
-          if (!resp.ok) throw new Error(`Profile submission failed: ${resp.status}`);
-
-          setMsg("Profile created successfully! Redirecting…", "ok");
-          setTimeout(() => { window.location.href = "/dashboard.html"; }, 900);
-        } catch (err) {
-          console.error("Submission error:", err);
-          setMsg("Failed to submit profile.", "err");
+          const tokenResponse = await msalInstance.acquireTokenSilent({ ...loginRequest, account });
+          accessToken = tokenResponse.accessToken;
+        } catch (silentError) {
+          console.warn("Silent token failed:", silentError);
+          const popupResponse = await msalInstance.acquireTokenPopup(loginRequest);
+          accessToken = popupResponse.accessToken;
         }
-      });
-    })();
+      } catch (error) {
+        console.error("Authentication error:", error);
+        document.getElementById("message").innerText = "Authentication failed.";
+      }
+    }
+
+    document.getElementById("profileForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const formData = {
+        name: document.getElementById("name").value,
+        country: document.getElementById("country").value,
+        phone: document.getElementById("phone").value
+      };
+
+      try {
+        const response = await fetch("https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) throw new Error("Profile submission failed");
+
+        document.getElementById("message").innerText = "Profile created successfully!";
+        setTimeout(() => {
+          window.location.href = "/dashboard.html";
+        }, 1500);
+      } catch (err) {
+        console.error("Submission error:", err);
+        document.getElementById("message").innerText = "Failed to submit profile.";
+      }
+    });
+
+    window.addEventListener("DOMContentLoaded", handleAuth);
   </script>
 </body>
 </html>
