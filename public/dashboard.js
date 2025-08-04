@@ -1,3 +1,4 @@
+// dashboard.js
 const msalConfig = {
   auth: {
     clientId: "7258cfca-e901-4077-8fba-224f8bc595e4",
@@ -16,23 +17,49 @@ const loginRequest = {
 
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 
+function setField(id, value) {
+  document.getElementById(id).textContent = value ?? "N/A";
+}
+
 async function getProfile(token) {
   try {
-    const response = await fetch("https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+    const resp = await fetch("https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile", {
+      headers: { Authorization: `Bearer ${token}` }
     });
 
-    if (!response.ok) throw new Error("API call failed");
+    // Handle 404 (no profile yet)
+    if (resp.status === 404) {
+      setField("name", "N/A");
+      setField("email", msalInstance.getAllAccounts()[0]?.username || "N/A");
+      setField("phone", "N/A");
+      setField("country", "N/A");
+      document.getElementById("profile").style.display = "block";
+      console.warn("GET /api/profile -> 404 (Profile not found)");
+      return;
+    }
 
-    const data = await response.json();
+    if (!resp.ok) {
+      throw new Error(`API call failed: ${resp.status}`);
+    }
 
-    // Populate profile info using backend fields
-    document.getElementById("name").textContent = data.FullName || "N/A";
-    document.getElementById("email").textContent = msalInstance.getAllAccounts()[0]?.username || "N/A";
-    document.getElementById("phone").textContent = data.PhoneNumber || "N/A";
-    document.getElementById("country").textContent = data.Country || "N/A";
+    const data = await resp.json();
+    console.log("Profile response:", data); // <— keep for debugging
+
+    // Be tolerant to any casing the backend might return
+    const name =
+      data?.name ?? data?.FullName ?? data?.fullName ?? null;
+    const phone =
+      data?.phone ?? data?.PhoneNumber ?? data?.phoneNumber ?? null;
+    const country =
+      data?.country ?? data?.Country ?? null;
+
+    const emailFromToken = msalInstance.getAllAccounts()[0]?.username || null;
+    const email = data?.email ?? emailFromToken;
+
+    setField("name", name || "N/A");
+    setField("email", email || "N/A");
+    setField("phone", phone || "N/A");
+    setField("country", country || "N/A");
 
     document.getElementById("profile").style.display = "block";
   } catch (err) {
@@ -50,12 +77,12 @@ async function acquireTokenAndLoadProfile() {
       ...loginRequest,
       account: accounts[0]
     });
-    getProfile(result.accessToken);
+    await getProfile(result.accessToken);
   } catch (silentError) {
     console.warn("Silent token failed. Trying popup...", silentError);
     try {
       const result = await msalInstance.acquireTokenPopup(loginRequest);
-      getProfile(result.accessToken);
+      await getProfile(result.accessToken);
     } catch (popupError) {
       console.error("Dashboard error:", popupError);
       document.getElementById("errorMessage").style.display = "block";
@@ -75,3 +102,4 @@ function signOut() {
 }
 
 window.addEventListener("DOMContentLoaded", acquireTokenAndLoadProfile);
+window.signOut = signOut;
