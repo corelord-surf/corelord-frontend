@@ -25,10 +25,17 @@
       font-size: 0.9rem;
       margin-bottom: 1rem;
     }
+    .error {
+      background-color: #161b22;
+      padding: 1rem;
+      border-radius: 8px;
+      color: #ff7b72;
+      font-family: monospace;
+    }
   </style>
 </head>
 <body>
-  <h1>Surf Forecast</h1>
+  <h1>Public Forecast</h1>
 
   <label for="breakSelect">Select Surf Break:</label>
   <select id="breakSelect"></select>
@@ -37,6 +44,7 @@
 
   <div id="chart-container">
     <canvas id="forecastChart" height="120"></canvas>
+    <div id="errorBox" class="error" style="display: none;">Failed to load forecast data.</div>
   </div>
 
   <script>
@@ -52,8 +60,10 @@
     const select = document.getElementById('breakSelect');
     const metaInfo = document.getElementById('metaInfo');
     const chartEl = document.getElementById('forecastChart');
+    const errorBox = document.getElementById('errorBox');
     let chart;
 
+    // Populate dropdown
     breaks.forEach(b => {
       const opt = document.createElement('option');
       opt.value = b.id;
@@ -66,9 +76,20 @@
     });
 
     async function fetchForecast(breakId) {
+      errorBox.style.display = "none";
+      metaInfo.textContent = "Loading...";
       try {
         const res = await fetch(`${API_URL}/api/forecast/timeseries?breakId=${breakId}&hours=168`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+
+        console.log("Forecast API Response:", data);
+
+        if (!data.items || data.items.length === 0) {
+          metaInfo.textContent = "No forecast data available.";
+          errorBox.style.display = "block";
+          return;
+        }
 
         const labels = data.items.map(i => new Date(i.ts * 1000).toLocaleString());
         const waveData = data.items.map(i => i.waveHeightM);
@@ -86,12 +107,16 @@
               {
                 label: 'Wave Height (m)',
                 data: waveData,
+                borderColor: '#58a6ff',
+                backgroundColor: 'rgba(88, 166, 255, 0.2)',
                 borderWidth: 2,
                 tension: 0.3
               },
               {
                 label: 'Wind Speed (kt)',
                 data: windData,
+                borderColor: '#ffa657',
+                backgroundColor: 'rgba(255, 166, 87, 0.2)',
                 borderWidth: 2,
                 tension: 0.3
               }
@@ -109,11 +134,13 @@
           }
         });
       } catch (err) {
-        metaInfo.innerText = "Failed to load forecast data.";
-        console.error("Forecast error:", err);
+        console.error("Error loading forecast:", err);
+        errorBox.style.display = "block";
+        metaInfo.textContent = "";
       }
     }
 
+    // Initial fetch
     fetchForecast(breaks[0].id);
   </script>
 </body>
