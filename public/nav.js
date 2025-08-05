@@ -7,7 +7,8 @@
     { href: "/profile.html",       text: "Profile",       match: p => p === "/profile.html" },
     // Treat any planner path as active for this link
     { href: "/planner-setup.html", text: "Planner Setup", match: p => p.startsWith("/planner") },
-    { href: "/preferences.html",   text: "Preferences",   match: p => p === "/preferences.html" }
+    { href: "/preferences.html",   text: "Preferences",   match: p => p === "/preferences.html" },
+    { href: "/availability.html",  text: "Availability",  match: p => p === "/availability.html" }
   ];
 
   const hideOn = ["/index.html", "/"]; // do not render on splash
