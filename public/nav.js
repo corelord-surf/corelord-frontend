@@ -1,25 +1,19 @@
-// Inject a left sidebar navigation into any page that includes this file.
-// Highlights the active link based on the current location.
-
 (function () {
   const links = [
-    { href: "/dashboard.html",     text: "Dashboard",     match: p => p === "/dashboard.html" },
-    { href: "/profile.html",       text: "Profile",       match: p => p === "/profile.html" },
-    // Treat any planner path as active for this link
-    { href: "/planner-setup.html", text: "Planner Setup", match: p => p.startsWith("/planner") },
-    { href: "/preferences.html",   text: "Preferences",   match: p => p === "/preferences.html" },
-    { href: "/availability.html",  text: "Availability",  match: p => p === "/availability.html" }
+    { href: "/dashboard.html",     text: "Dashboard",       match: p => p === "/dashboard.html" },
+    { href: "/profile.html",       text: "Profile",         match: p => p === "/profile.html" },
+    { href: "/planner-setup.html", text: "Planner Setup",   match: p => p.startsWith("/planner") },
+    { href: "/preferences.html",   text: "Preferences",     match: p => p === "/preferences.html" },
+    { href: "/availability.html",  text: "Availability",    match: p => p === "/availability.html" },
+    { href: "/forecast-debug.html",text: "Forecast",        match: p => p === "/forecast-debug.html" }
   ];
 
-  const hideOn = ["/index.html", "/"]; // do not render on splash
+  const hideOn = ["/index.html", "/"];
   const norm = (p) => {
     try {
-      // pathname only, lower case, strip trailing slash
       let s = (p || location.pathname).toLowerCase().replace(/\/+$/, "");
-      // normalise index
       if (s === "") s = "/";
       if (s.endsWith("/index.html")) s = s.slice(0, -"/index.html".length) || "/";
-      // if no extension and not root, assume .html
       if (!s.endsWith(".html") && s !== "/") s = s + ".html";
       return s;
     } catch {
@@ -34,7 +28,6 @@
     try {
       document.body.classList.add("cl-with-nav");
 
-      // Build nav shell
       const nav = document.createElement("nav");
       nav.id = "cl-nav-root";
       nav.innerHTML = `
@@ -44,7 +37,6 @@
       `;
       document.body.appendChild(nav);
 
-      // Layout wrapper so we do not edit each page
       const layout = document.createElement("div");
       layout.id = "cl-nav-layout";
 
@@ -61,7 +53,6 @@
       layout.appendChild(content);
       document.body.appendChild(layout);
 
-      // Render links and set active
       const list = document.getElementById("cl-nav-links");
       links.forEach(l => {
         const li = document.createElement("li");
