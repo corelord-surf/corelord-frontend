@@ -7,25 +7,39 @@ const msalConfig = {
     authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
     redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net/forecast-debug.html"
   },
-  cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
+  cache: {
+    cacheLocation: "localStorage",
+    storeAuthStateInCookie: false
+  }
 };
-const loginRequest = { scopes: ["openid","profile","email", API_SCOPE_VALUE] };
+
+const loginRequest = {
+  scopes: ["openid", "profile", "email", API_SCOPE_VALUE]
+};
+
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 
 const out = document.getElementById("out");
 const tsTable = document.getElementById("tsTable");
-const tsBody  = document.getElementById("tsBody");
+const tsBody = document.getElementById("tsBody");
 
-function $(id){ return document.getElementById(id); }
-function fmt(ts){
-  try { return new Date(ts * 1000).toLocaleString(); } catch { return String(ts); }
+function $(id) {
+  return document.getElementById(id);
+}
+
+function fmt(ts) {
+  try {
+    return new Date(ts * 1000).toLocaleString();
+  } catch {
+    return String(ts);
+  }
 }
 
 async function acquireToken() {
   await msalInstance.initialize();
   let account = msalInstance.getAllAccounts()[0];
   if (!account) {
-    const r = await msalInstance.loginPopup({ scopes: ["openid","profile","email"] });
+    const r = await msalInstance.loginPopup({ scopes: ["openid", "profile", "email"] });
     account = r.account;
   }
   try {
@@ -37,7 +51,6 @@ async function acquireToken() {
   }
 }
 
-// Show the backend error body instead of only the status code
 async function apiGet(path) {
   const token = await acquireToken();
   const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -45,7 +58,6 @@ async function apiGet(path) {
   });
   const text = await res.text();
   if (!res.ok) {
-    // Try to extract a JSON message if present
     try {
       const json = JSON.parse(text);
       throw new Error(`GET ${path} ${res.status}: ${json.message || text}`);
@@ -53,7 +65,11 @@ async function apiGet(path) {
       throw new Error(`GET ${path} ${res.status}: ${text}`);
     }
   }
-  try { return JSON.parse(text); } catch { return text; }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
 }
 
 function showRaw(obj) {
@@ -68,10 +84,10 @@ function showTs(json) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${fmt(r.ts)}</td>
-      <td>${r.waveMinM ?? ""} to ${r.waveMaxM ?? ""}</td>
-      <td>${r.periodS ?? ""}</td>
+      <td>${r.waveHeightM ?? ""}</td>
+      <td>${r.swellPeriodS ?? ""}</td>
       <td>${r.swellDir ?? ""}</td>
-      <td>${r.windKt ?? ""}</td>
+      <td>${r.windSpeedKt ?? ""}</td>
       <td>${r.windDir ?? ""}</td>
       <td>${r.tideM ?? ""}</td>
     `;
@@ -82,24 +98,27 @@ function showTs(json) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  $("rawWaveBtn").addEventListener("click", async () => {
-    const id = $("breakId").value, h = $("hours").value;
-    try { showRaw(await apiGet(`/surfline/raw?type=wave&breakId=${id}&hours=${h}`)); }
-    catch (e) { out.textContent = e.toString(); }
-  });
-  $("rawWindBtn").addEventListener("click", async () => {
-    const id = $("breakId").value, h = $("hours").value;
-    try { showRaw(await apiGet(`/surfline/raw?type=wind&breakId=${id}&hours=${h}`)); }
-    catch (e) { out.textContent = e.toString(); }
-  });
-  $("rawTideBtn").addEventListener("click", async () => {
-    const id = $("breakId").value, h = $("hours").value;
-    try { showRaw(await apiGet(`/surfline/raw?type=tides&breakId=${id}&hours=${h}`)); }
-    catch (e) { out.textContent = e.toString(); }
-  });
-  $("tsBtn").addEventListener("click", async () => {
-    const id = $("breakId").value, h = $("hours").value;
-    try { showTs(await apiGet(`/timeseries?breakId=${id}&hours=${h}`)); }
-    catch (e) { out.textContent = e.toString(); }
+  const buttons = [
+    $("rawWaveBtn"),
+    $("rawWindBtn"),
+    $("rawTideBtn"),
+    $("tsBtn")
+  ];
+
+  buttons.forEach(button => {
+    button.addEventListener("click", async () => {
+      const id = $("breakId").value;
+      const h = $("hours").value;
+      try {
+        const data = await apiGet(`/timeseries?breakId=${id}&hours=${h}`);
+        if (button.id === "tsBtn") {
+          showTs(data);
+        } else {
+          showRaw(data);
+        }
+      } catch (e) {
+        out.textContent = e.toString();
+      }
+    });
   });
 });
