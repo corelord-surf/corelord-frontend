@@ -84,14 +84,14 @@ function showForecast(json) {
   items.forEach(r => {
     const tr = document.createElement("tr");
 
-    const wave = r.waveHeightM ? `${r.waveHeightM.toFixed(2)} m` : "";
-    const swell = r.swellPeriodS && r.swellDir
-      ? `${r.swellPeriodS}s @ ${Math.round(r.swellDir)}°`
+    const wave = r.waveHeightM != null ? `${r.waveHeightM.toFixed(2)} m` : "";
+    const swell = r.swellPeriodS != null && r.swellDir != null
+      ? `${r.swellPeriodS.toFixed(1)}s @ ${Math.round(r.swellDir)}°`
       : "";
-    const wind = r.windSpeedKt && r.windDir
+    const wind = r.windSpeedKt != null && r.windDir != null
       ? `${degToCompass(r.windDir)} @ ${r.windSpeedKt.toFixed(1)} kt`
       : "";
-    const tide = r.tideM ? `${r.tideM.toFixed(2)} m` : "";
+    const tide = r.tideM != null ? `${r.tideM.toFixed(2)} m` : "";
 
     tr.innerHTML = `
       <td>${fmt(r.ts)}</td>
