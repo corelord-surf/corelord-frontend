@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/nav.css">
+<script src="/nav.js" defer></script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CoreLord Planner Setup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0d1117;
+      color: #ffffff;
+      margin: 0;
+      padding: 1.5rem;
+    }
+    h1 { margin: 0 0 1rem 0; }
+    .row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .card {
+      background-color: #161b22;
+      border-radius: 8px;
+      padding: 1rem;
+      min-width: 280px;
+      max-width: 520px;
+      flex: 1;
+    }
+    label { display: block; margin-top: 0.75rem; }
+    select, input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      border-radius: 4px;
+      border: none;
+    }
+    fieldset {
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      margin-top: 0.75rem;
+      padding: 0.5rem 0.75rem;
+    }
+    legend { padding: 0 0.25rem; }
+    .checks { display: grid; grid-template-columns: repeat(4, minmax(50px, 1fr)); gap: 0.5rem; }
+    .actions { margin-top: 1rem; display: flex; gap: 0.75rem; }
+    button {
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .primary { background-color: #238636; color: #fff; }
+    .secondary { background-color: #fff; color: #0d1117; }
+    #status { margin-top: 0.75rem; }
+    a { color: #58a6ff; }
+  </style>
+</head>
+<body>
+  <h1>Planner Setup</h1>
+  <p>Choose a region and break, then set your preferred conditions. Saved to your account.</p>
+
+  <div class="row">
+    <div class="card">
+      <label for="region">Region</label>
+      <select id="region"></select>
+
+      <label for="break">Break</label>
+      <select id="break"></select>
+
+      <fieldset>
+        <legend>Wave height metres</legend>
+        <div class="row">
+          <div style="flex:1">
+            <label for="minHeight">Min</label>
+            <input type="number" id="minHeight" step="0.1" min="0" placeholder="1.0"/>
+          </div>
+          <div style="flex:1">
+            <label for="maxHeight">Max</label>
+            <input type="number" id="maxHeight" step="0.1" min="0" placeholder="2.0"/>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Period seconds</legend>
+        <div class="row">
+          <div style="flex:1">
+            <label for="minPeriod">Min</label>
+            <input type="number" id="minPeriod" step="1" min="0" placeholder="10"/>
+          </div>
+          <div style="flex:1">
+            <label for="maxPeriod">Max</label>
+            <input type="number" id="maxPeriod" step="1" min="0" placeholder="18"/>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Allowed swell directions</legend>
+        <div class="checks" id="swellDirs"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Wind limits</legend>
+        <label for="maxWind">Max wind speed knots</label>
+        <input type="number" id="maxWind" step="1" min="0" placeholder="15"/>
+
+        <legend style="margin-top:0.75rem">Allowed wind directions</legend>
+        <div class="checks" id="windDirs"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Tide metres optional</legend>
+        <div class="row">
+          <div style="flex:1">
+            <label for="minTide">Min</label>
+            <input type="number" id="minTide" step="0.1" placeholder="0.8"/>
+          </div>
+          <div style="flex:1">
+            <label for="maxTide">Max</label>
+            <input type="number" id="maxTide" step="0.1" placeholder="1.5"/>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button class="primary" id="saveBtn">Save preferences</button>
+        <button class="secondary" id="resetBtn">Reset</button>
+      </div>
+      <div id="status"></div>
+    </div>
+
+    <div class="card">
+      <h3>Your session availability</h3>
+      <p>We will add a weekly grid of two hour daylight blocks next.</p>
+      <p><a href="/dashboard.html">Back to dashboard</a></p>
+    </div>
+  </div>
+
+  <script src="https://alcdn.msauth.net/browser/2.38.2/js/msal-browser.min.js"></script>
+  <script>
+    const API_BASE = "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/planner";
+    const API_SCOPE = "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation";
+  </script>
+  <script src="planner-setup.js"></script>
+</body>
+</html>
