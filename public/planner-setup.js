@@ -1,7 +1,10 @@
 // Planner Setup – reads and writes preferences via the API
 
-const API_BASE = "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/planner";
-const API_SCOPE = "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation";
+// Fallbacks so the script works even if the page did not define these globals
+const API_BASE = (window.API_BASE ||
+  "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/planner");
+const API_SCOPE = (window.API_SCOPE ||
+  "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation");
 
 const msalConfig = {
   auth: {
@@ -35,6 +38,9 @@ const f = {
 };
 
 // utils
+function log(...a){ console.log("[planner-setup]", ...a); }
+function warn(...a){ console.warn("[planner-setup]", ...a); }
+
 function renderDirChecks(container) {
   container.innerHTML = "";
   DIRS.forEach(d => {
@@ -62,7 +68,8 @@ async function acquireApiToken(account) {
   try {
     const r = await msalInstance.acquireTokenSilent({ ...loginRequest, account });
     return r.accessToken;
-  } catch {
+  } catch (e) {
+    warn("Silent token failed, using popup", e);
     const r = await msalInstance.acquireTokenPopup({ ...loginRequest, account });
     return r.accessToken;
   }
@@ -70,8 +77,7 @@ async function acquireApiToken(account) {
 
 async function apiGet(url, token) {
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (res.status === 204) return null;      // no prefs yet
-  if (res.status === 404) return null;      // legacy behaviour if any
+  if (res.status === 204 || res.status === 404) return null;
   if (!res.ok) throw new Error(`${url} failed ${res.status}`);
   return res.json();
 }
@@ -97,6 +103,7 @@ async function loadRegions(token) {
     opt.textContent = r.name;
     regionSel.appendChild(opt);
   });
+  log("Regions loaded:", regs.map(r => r.name));
 }
 
 async function loadBreaks(token) {
@@ -109,6 +116,7 @@ async function loadBreaks(token) {
     opt.textContent = b.Name;
     breakSel.appendChild(opt);
   });
+  log("Breaks loaded for", region, "count", list.length);
 }
 
 function readForm() {
@@ -137,68 +145,69 @@ function writeForm(p) {
   f.maxTide.value = p?.MaxTideM ?? "";
 }
 
-(async function init() {
-  renderDirChecks(swellDirsDiv);
-  renderDirChecks(windDirsDiv);
-
-  await msalInstance.initialize();
-  let account = msalInstance.getAllAccounts()[0];
-  if (!account) {
-    const r = await msalInstance.loginPopup({ scopes: ["openid","profile","email"] });
-    account = r.account;
-  }
-  const token = await acquireApiToken(account);
-
-  await loadRegions(token);
-  await loadBreaks(token);
-
+document.addEventListener("DOMContentLoaded", async () => {
   try {
-    const existing = await apiGet(`${API_BASE}/prefs?breakId=${breakSel.value}`, token);
-    writeForm(existing);
-    statusEl.textContent = existing ? "Loaded existing preferences" : "No preferences saved yet";
-  } catch (e) {
-    console.warn(e);
-    statusEl.textContent = "Could not load preferences";
-  }
+    log("Boot start. API_BASE:", API_BASE);
+    renderDirChecks(swellDirsDiv);
+    renderDirChecks(windDirsDiv);
 
-  regionSel.addEventListener("change", async () => {
-    await loadBreaks(token);
-    const existing = await apiGet(`${API_BASE}/prefs?breakId=${breakSel.value}`, token);
-    writeForm(existing);
-    statusEl.textContent = existing ? "Loaded existing preferences" : "No preferences saved yet";
-  });
-
-  breakSel.addEventListener("change", async () => {
-    const existing = await apiGet(`${API_BASE}/prefs?breakId=${breakSel.value}`, token);
-    writeForm(existing);
-    statusEl.textContent = existing ? "Loaded existing preferences" : "No preferences saved yet";
-  });
-
-  document.getElementById("saveBtn").addEventListener("click", async () => {
-    try {
-      const body = readForm();
-      if (body.minHeight != null && body.maxHeight != null && body.minHeight > body.maxHeight) {
-        statusEl.textContent = "Min height must be less than max height";
-        return;
-      }
-      if (body.minPeriod != null && body.maxPeriod != null && body.minPeriod > body.maxPeriod) {
-        statusEl.textContent = "Min period must be less than max period";
-        return;
-      }
-      if (body.minTide != null && body.maxTide != null && body.minTide > body.maxTide) {
-        statusEl.textContent = "Min tide must be less than max tide";
-        return;
-      }
-      await apiPost(`${API_BASE}/prefs`, token, body);
-      statusEl.textContent = "Saved";
-    } catch (e) {
-      console.error(e);
-      statusEl.textContent = "Save failed";
+    await msalInstance.initialize();
+    let account = msalInstance.getAllAccounts()[0];
+    if (!account) {
+      const r = await msalInstance.loginPopup({ scopes: ["openid","profile","email"] });
+      account = r.account;
     }
-  });
+    const token = await acquireApiToken(account);
 
-  document.getElementById("resetBtn").addEventListener("click", async () => {
-    writeForm(null);
-    statusEl.textContent = "Cleared. Save to persist";
-  });
-})();
+    await loadRegions(token);
+    await loadBreaks(token);
+
+    const existing = await apiGet(`${API_BASE}/prefs?breakId=${breakSel.value}`, token);
+    writeForm(existing);
+    statusEl.textContent = existing ? "Loaded existing preferences" : "No preferences saved yet";
+
+    regionSel.addEventListener("change", async () => {
+      await loadBreaks(token);
+      const ex = await apiGet(`${API_BASE}/prefs?breakId=${breakSel.value}`, token);
+      writeForm(ex);
+      statusEl.textContent = ex ? "Loaded existing preferences" : "No preferences saved yet";
+    });
+
+    breakSel.addEventListener("change", async () => {
+      const ex = await apiGet(`${API_BASE}/prefs?breakId=${breakSel.value}`, token);
+      writeForm(ex);
+      statusEl.textContent = ex ? "Loaded existing preferences" : "No preferences saved yet";
+    });
+
+    document.getElementById("saveBtn").addEventListener("click", async () => {
+      try {
+        const body = readForm();
+        if (body.minHeight != null && body.maxHeight != null && body.minHeight > body.maxHeight) {
+          statusEl.textContent = "Min height must be less than max height";
+          return;
+        }
+        if (body.minPeriod != null && body.maxPeriod != null && body.minPeriod > body.maxPeriod) {
+          statusEl.textContent = "Min period must be less than max period";
+          return;
+        }
+        if (body.minTide != null && body.maxTide != null && body.minTide > body.maxTide) {
+          statusEl.textContent = "Min tide must be less than max tide";
+          return;
+        }
+        await apiPost(`${API_BASE}/prefs`, token, body);
+        statusEl.textContent = "Saved";
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = "Save failed";
+      }
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", async () => {
+      writeForm(null);
+      statusEl.textContent = "Cleared. Save to persist";
+    });
+  } catch (e) {
+    console.error("[planner-setup] boot failed", e);
+    statusEl.textContent = "Failed to initialise. See console.";
+  }
+});
