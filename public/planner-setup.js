@@ -1,4 +1,7 @@
-// Acquire token and call planner API to load breaks and read write preferences
+// Planner Setup – reads and writes preferences via the API
+
+const API_BASE = "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/planner";
+const API_SCOPE = "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation";
 
 const msalConfig = {
   auth: {
@@ -31,7 +34,7 @@ const f = {
   maxTide: document.getElementById("maxTide"),
 };
 
-// helpers
+// utils
 function renderDirChecks(container) {
   container.innerHTML = "";
   DIRS.forEach(d => {
@@ -67,7 +70,8 @@ async function acquireApiToken(account) {
 
 async function apiGet(url, token) {
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (res.status === 404) return null;
+  if (res.status === 204) return null;      // no prefs yet
+  if (res.status === 404) return null;      // legacy behaviour if any
   if (!res.ok) throw new Error(`${url} failed ${res.status}`);
   return res.json();
 }
@@ -148,7 +152,6 @@ function writeForm(p) {
   await loadRegions(token);
   await loadBreaks(token);
 
-  // load any saved prefs
   try {
     const existing = await apiGet(`${API_BASE}/prefs?breakId=${breakSel.value}`, token);
     writeForm(existing);
@@ -174,7 +177,6 @@ function writeForm(p) {
   document.getElementById("saveBtn").addEventListener("click", async () => {
     try {
       const body = readForm();
-      // light validation
       if (body.minHeight != null && body.maxHeight != null && body.minHeight > body.maxHeight) {
         statusEl.textContent = "Min height must be less than max height";
         return;
