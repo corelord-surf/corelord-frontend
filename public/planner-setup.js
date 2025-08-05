@@ -1,9 +1,8 @@
 // Planner Setup – reads and writes preferences via the API
-
-// Fallbacks so the script works even if the page did not define these globals
-const API_BASE = (window.API_BASE ||
+// Use local names so we do not clash with any globals declared in the page.
+const API_BASE_URL = (window.API_BASE ||
   "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/planner");
-const API_SCOPE = (window.API_SCOPE ||
+const API_SCOPE_VALUE = (window.API_SCOPE ||
   "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation");
 
 const msalConfig = {
@@ -14,19 +13,19 @@ const msalConfig = {
   },
   cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
 };
-const loginRequest = { scopes: ["openid","profile","email", API_SCOPE] };
+const loginRequest = { scopes: ["openid", "profile", "email", API_SCOPE_VALUE] };
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 
 const DIRS = ["N","NE","E","SE","S","SW","W","NW"];
 
-// elements
+// Elements
 const regionSel = document.getElementById("region");
 const breakSel = document.getElementById("break");
 const swellDirsDiv = document.getElementById("swellDirs");
 const windDirsDiv = document.getElementById("windDirs");
 const statusEl = document.getElementById("status");
 
-// form fields
+// Form fields
 const f = {
   minHeight: document.getElementById("minHeight"),
   maxHeight: document.getElementById("maxHeight"),
@@ -37,7 +36,7 @@ const f = {
   maxTide: document.getElementById("maxTide"),
 };
 
-// utils
+// Helpers
 function log(...a){ console.log("[planner-setup]", ...a); }
 function warn(...a){ console.warn("[planner-setup]", ...a); }
 
@@ -95,7 +94,7 @@ async function apiPost(url, token, body) {
 }
 
 async function loadRegions(token) {
-  const regs = await apiGet(`${API_BASE}/regions`, token);
+  const regs = await apiGet(`${API_BASE_URL}/regions`, token);
   regionSel.innerHTML = "";
   regs.forEach(r => {
     const opt = document.createElement("option");
@@ -108,7 +107,7 @@ async function loadRegions(token) {
 
 async function loadBreaks(token) {
   const region = regionSel.value;
-  const list = await apiGet(`${API_BASE}/breaks?region=${encodeURIComponent(region)}`, token);
+  const list = await apiGet(`${API_BASE_URL}/breaks?region=${encodeURIComponent(region)}`, token);
   breakSel.innerHTML = "";
   list.forEach(b => {
     const opt = document.createElement("option");
@@ -145,9 +144,10 @@ function writeForm(p) {
   f.maxTide.value = p?.MaxTideM ?? "";
 }
 
+// Boot
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    log("Boot start. API_BASE:", API_BASE);
+    log("Boot start. API_BASE_URL:", API_BASE_URL);
     renderDirChecks(swellDirsDiv);
     renderDirChecks(windDirsDiv);
 
@@ -162,19 +162,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadRegions(token);
     await loadBreaks(token);
 
-    const existing = await apiGet(`${API_BASE}/prefs?breakId=${breakSel.value}`, token);
+    const existing = await apiGet(`${API_BASE_URL}/prefs?breakId=${breakSel.value}`, token);
     writeForm(existing);
     statusEl.textContent = existing ? "Loaded existing preferences" : "No preferences saved yet";
 
     regionSel.addEventListener("change", async () => {
       await loadBreaks(token);
-      const ex = await apiGet(`${API_BASE}/prefs?breakId=${breakSel.value}`, token);
+      const ex = await apiGet(`${API_BASE_URL}/prefs?breakId=${breakSel.value}`, token);
       writeForm(ex);
       statusEl.textContent = ex ? "Loaded existing preferences" : "No preferences saved yet";
     });
 
     breakSel.addEventListener("change", async () => {
-      const ex = await apiGet(`${API_BASE}/prefs?breakId=${breakSel.value}`, token);
+      const ex = await apiGet(`${API_BASE_URL}/prefs?breakId=${breakSel.value}`, token);
       writeForm(ex);
       statusEl.textContent = ex ? "Loaded existing preferences" : "No preferences saved yet";
     });
@@ -194,7 +194,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           statusEl.textContent = "Min tide must be less than max tide";
           return;
         }
-        await apiPost(`${API_BASE}/prefs`, token, body);
+        await apiPost(`${API_BASE_URL}/prefs`, token, body);
         statusEl.textContent = "Saved";
       } catch (e) {
         console.error(e);
@@ -202,7 +202,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
-    document.getElementById("resetBtn").addEventListener("click", async () => {
+    document.getElementById("resetBtn").addEventListener("click", () => {
       writeForm(null);
       statusEl.textContent = "Cleared. Save to persist";
     });
