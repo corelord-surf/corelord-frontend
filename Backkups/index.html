@@ -64,12 +64,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.0.0/lib/msal-browser.min.js"></script>
   <script>
     window.onload = async function () {
-      const API_SCOPE = "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation";
-      const API_URL = "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile";
-
       const msalConfig = {
         auth: {
-          clientId: "7258cfca-e901-4077-8fba-224f8bc595e4",
+          clientId: "7258cfca-e901-4077-8fba-224f8bc595e4", // ✅ correct frontend client ID
           authority: "https://login.microsoftonline.com/d048d6e2-6e9f-4af0-afcf-58a5ad036480",
           redirectUri: "https://calm-coast-025fe8203.2.azurestaticapps.net"
         },
@@ -82,53 +79,13 @@
       const msalInstance = new msal.PublicClientApplication(msalConfig);
       await msalInstance.initialize();
 
-      async function acquireApiToken(account) {
-        try {
-          const res = await msalInstance.acquireTokenSilent({
-            account,
-            scopes: ["openid", "profile", "email", API_SCOPE]
-          });
-          return res.accessToken;
-        } catch (e) {
-          const res = await msalInstance.acquireTokenPopup({
-            account,
-            scopes: ["openid", "profile", "email", API_SCOPE]
-          });
-          return res.accessToken;
-        }
-      }
-
-      async function routeAfterLogin(account) {
-        try {
-          const token = await acquireApiToken(account);
-          const res = await fetch(API_URL, {
-            method: "GET",
-            headers: { "Authorization": `Bearer ${token}` }
-          });
-
-          if (res.status === 200) {
-            window.location.href = "/dashboard.html";
-            return;
-          }
-          if (res.status === 404) {
-            window.location.href = "/profile.html";
-            return;
-          }
-
-          // Fallback to profile page if response is unexpected
-          window.location.href = "/profile.html";
-        } catch (err) {
-          console.error("Routing check failed:", err);
-          window.location.href = "/profile.html";
-        }
-      }
-
       async function signIn() {
         try {
           const result = await msalInstance.loginPopup({
             scopes: ["openid", "profile", "email"]
           });
-          await routeAfterLogin(result.account);
+          console.log("Sign-in successful:", result.account);
+          window.location.href = "/profile.html";
         } catch (error) {
           console.error("Sign-in error:", error);
         }
@@ -140,21 +97,18 @@
             scopes: ["openid", "profile", "email"],
             prompt: "select_account"
           });
-          await routeAfterLogin(result.account);
+          console.log("Sign-up successful:", result.account);
+          window.location.href = "/profile.html";
         } catch (error) {
           console.error("Sign-up error:", error);
         }
       }
 
       function signOut() {
-        const logoutRequest = { account: msalInstance.getAllAccounts()[0] };
+        const logoutRequest = {
+          account: msalInstance.getAllAccounts()[0]
+        };
         msalInstance.logoutPopup(logoutRequest);
-      }
-
-      // Auto route returning users that arrive on the splash page already signed in
-      const accounts = msalInstance.getAllAccounts();
-      if (accounts.length > 0) {
-        routeAfterLogin(accounts[0]);
       }
 
       document.getElementById("signInBtn").onclick = signIn;

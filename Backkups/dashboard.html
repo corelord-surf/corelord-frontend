@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoreLord Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0d1117;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .profile {
+      margin-top: 2rem;
+      background-color: #161b22;
+      padding: 1.5rem;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .profile p {
+      margin: 0.5rem 0;
+    }
+    #signOutBtn {
+      margin-top: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #ffffff;
+      color: #0d1117;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    #errorMessage {
+      color: #ff6b6b;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome to Your Dashboard</h1>
+
+  <p id="loadingMessage">Loading your profile...</p>
+
+  <div id="profile" class="profile" style="display: none;">
+    <p><strong>Name:</strong> <span id="name">N/A</span></p>
+    <p><strong>Email:</strong> <span id="email">N/A</span></p>
+    <p><strong>Phone:</strong> <span id="phone">N/A</span></p>
+    <p><strong>Country:</strong> <span id="country">N/A</span></p>
+    <button id="signOutBtn" onclick="signOut()">Sign Out</button>
+  </div>
+
+  <p id="errorMessage" style="display: none;">
+    Session expired or access denied. Please
+    <a href="index.html" style="color: #58a6ff;">sign in again</a>.
+  </p>
+
+  <!-- MSAL and page logic -->
+  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
