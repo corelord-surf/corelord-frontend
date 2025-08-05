@@ -2,53 +2,119 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Forecast - CoreLord</title>
-  <link rel="stylesheet" href="Nav.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    .cl-container {
-      padding: 2rem;
+    body {
+      background-color: #0d1117;
       color: #ffffff;
+      font-family: Arial, sans-serif;
+      padding: 2rem;
     }
-
-    h1 {
-      font-size: 1.75rem;
-      margin-bottom: 1rem;
+    label, select {
+      font-size: 1rem;
     }
-
-    pre {
-      background: #161b22;
+    #chart-container {
+      margin-top: 2rem;
+      background-color: #161b22;
       padding: 1rem;
-      border-radius: 6px;
-      overflow-x: auto;
+      border-radius: 8px;
+    }
+    .meta {
       font-size: 0.9rem;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
 <body>
-  <div class="cl-container">
-    <h1>7-Day Public Forecast</h1>
-    <p>This page shows publicly cached data for a predefined surf break. The data is sourced from Stormglass.</p>
-    <pre id="forecastJson">Loading forecast...</pre>
+  <h1>Surf Forecast</h1>
+
+  <label for="breakSelect">Select Surf Break:</label>
+  <select id="breakSelect"></select>
+
+  <div class="meta" id="metaInfo"></div>
+
+  <div id="chart-container">
+    <canvas id="forecastChart" height="120"></canvas>
   </div>
 
-  <script src="Nav.js"></script>
   <script>
-    async function loadForecast() {
-      const breakId = 15; // default: Ribeira d’Ilhas
-      const hours = 168;
+    const API_URL = "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net";
 
+    const breaks = [
+      { id: 15, name: "Ribeira D'Ilhas" },
+      { id: 17, name: "Coxos" },
+      { id: 23, name: "Winki Pop" },
+      { id: 24, name: "Bells Beach" }
+    ];
+
+    const select = document.getElementById('breakSelect');
+    const metaInfo = document.getElementById('metaInfo');
+    const chartEl = document.getElementById('forecastChart');
+    let chart;
+
+    breaks.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.id;
+      opt.textContent = b.name;
+      select.appendChild(opt);
+    });
+
+    select.addEventListener('change', () => {
+      fetchForecast(select.value);
+    });
+
+    async function fetchForecast(breakId) {
       try {
-        const res = await fetch(`/api/forecast/timeseries?breakId=${breakId}&hours=${hours}`);
-        const json = await res.json();
-        document.getElementById("forecastJson").textContent = JSON.stringify(json, null, 2);
+        const res = await fetch(`${API_URL}/api/forecast/timeseries?breakId=${breakId}&hours=168`);
+        const data = await res.json();
+
+        const labels = data.items.map(i => new Date(i.ts * 1000).toLocaleString());
+        const waveData = data.items.map(i => i.waveHeightM);
+        const windData = data.items.map(i => i.windSpeedKt);
+
+        metaInfo.innerText = `${data.break.Name} | ${data.hours}h | From Cache: ${data.fromCache ? 'Yes' : 'No'}`;
+
+        if (chart) chart.destroy();
+
+        chart = new Chart(chartEl, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Wave Height (m)',
+                data: waveData,
+                borderWidth: 2,
+                tension: 0.3
+              },
+              {
+                label: 'Wind Speed (kt)',
+                data: windData,
+                borderWidth: 2,
+                tension: 0.3
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { labels: { color: '#ffffff' } }
+            },
+            scales: {
+              x: { ticks: { color: '#cccccc' } },
+              y: { ticks: { color: '#cccccc' } }
+            }
+          }
+        });
       } catch (err) {
-        document.getElementById("forecastJson").textContent = "Failed to load forecast data.";
-        console.error("Error loading forecast:", err);
+        metaInfo.innerText = "Failed to load forecast data.";
+        console.error("Forecast error:", err);
       }
     }
 
-    loadForecast();
+    fetchForecast(breaks[0].id);
   </script>
 </body>
 </html>
