@@ -29,10 +29,15 @@ function $(id) {
 
 function fmt(ts) {
   try {
-    return new Date(ts * 1000).toLocaleString();
+    return new Date(ts * 1000).toLocaleString("en-AU", { timeZone: "Australia/Sydney" });
   } catch {
     return String(ts);
   }
+}
+
+function degToCompass(deg) {
+  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  return dirs[Math.round(deg / 45) % 8];
 }
 
 async function acquireToken() {
@@ -72,53 +77,45 @@ async function apiGet(path) {
   }
 }
 
-function showRaw(obj) {
-  tsTable.style.display = "none";
-  out.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
-}
-
-function showTs(json) {
+function showForecast(json) {
   const items = json?.items || [];
   tsBody.innerHTML = "";
-  items.slice(0, 72).forEach(r => {
+
+  items.forEach(r => {
     const tr = document.createElement("tr");
+
+    const wave = r.waveHeightM ? `${r.waveHeightM.toFixed(2)} m` : "";
+    const swell = r.swellPeriodS && r.swellDir
+      ? `${r.swellPeriodS}s @ ${Math.round(r.swellDir)}°`
+      : "";
+    const wind = r.windSpeedKt && r.windDir
+      ? `${degToCompass(r.windDir)} @ ${r.windSpeedKt.toFixed(1)} kt`
+      : "";
+    const tide = r.tideM ? `${r.tideM.toFixed(2)} m` : "";
+
     tr.innerHTML = `
       <td>${fmt(r.ts)}</td>
-      <td>${r.waveHeightM ?? ""}</td>
-      <td>${r.swellPeriodS ?? ""}</td>
-      <td>${r.swellDir ?? ""}</td>
-      <td>${r.windSpeedKt ?? ""}</td>
-      <td>${r.windDir ?? ""}</td>
-      <td>${r.tideM ?? ""}</td>
+      <td>${wave}</td>
+      <td>${swell}</td>
+      <td>${wind}</td>
+      <td>${tide}</td>
     `;
     tsBody.appendChild(tr);
   });
+
   tsTable.style.display = "table";
-  out.textContent = `Rendered ${items.length} rows`;
+  out.textContent = `Showing ${items.length} forecast entries for ${json.break?.Name || "Break"}`;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const buttons = [
-    $("rawWaveBtn"),
-    $("rawWindBtn"),
-    $("rawTideBtn"),
-    $("tsBtn")
-  ];
-
-  buttons.forEach(button => {
-    button.addEventListener("click", async () => {
-      const id = $("breakId").value;
-      const h = $("hours").value;
-      try {
-        const data = await apiGet(`/timeseries?breakId=${id}&hours=${h}`);
-        if (button.id === "tsBtn") {
-          showTs(data);
-        } else {
-          showRaw(data);
-        }
-      } catch (e) {
-        out.textContent = e.toString();
-      }
-    });
+  $("forecastBtn").addEventListener("click", async () => {
+    const id = $("breakId").value;
+    const h = $("hours").value;
+    try {
+      const data = await apiGet(`/timeseries?breakId=${id}&hours=${h}`);
+      showForecast(data);
+    } catch (e) {
+      out.textContent = e.toString();
+    }
   });
 });
