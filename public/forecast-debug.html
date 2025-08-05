@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CoreLord Forecast Debug</title>
+  <link rel="stylesheet" href="/nav.css">
+  <script src="/nav.js" defer></script>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0d1117; color:#fff; margin:0; }
+    .wrap { max-width:1100px; margin:0 auto; padding:1.5rem; }
+    .row { display:flex; gap:0.5rem; align-items:center; margin-bottom:1rem; }
+    input, select, button { padding:0.5rem; border-radius:6px; border:none; }
+    button { cursor:pointer; }
+    pre { background:#161b22; padding:1rem; border-radius:8px; overflow:auto; }
+    table { width:100%; border-collapse:collapse; margin-top:1rem; }
+    th, td { border-bottom:1px solid #30363d; padding:0.5rem; text-align:left; }
+    th { background:#0f1720; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Forecast debug</h1>
+    <div class="row">
+      <label for="breakId">BreakId</label>
+      <input id="breakId" type="number" placeholder="e.g. 10">
+      <label for="hours">Hours</label>
+      <input id="hours" type="number" value="72">
+      <button id="rawWaveBtn">Raw wave</button>
+      <button id="rawWindBtn">Raw wind</button>
+      <button id="rawTideBtn">Raw tides</button>
+      <button id="tsBtn">Timeseries</button>
+    </div>
+
+    <h3>Normalised timeseries</h3>
+    <table id="tsTable" style="display:none">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Wave m</th>
+          <th>Period s</th>
+          <th>Swell deg</th>
+          <th>Wind kt</th>
+          <th>Wind deg</th>
+          <th>Tide m</th>
+        </tr>
+      </thead>
+      <tbody id="tsBody"></tbody>
+    </table>
+
+    <h3>Raw response</h3>
+    <pre id="out">No request yet</pre>
+  </div>
+
+  <script src="https://alcdn.msauth.net/browser/2.38.2/js/msal-browser.min.js"></script>
+  <script src="/forecast-debug.js"></script>
+</body>
+</html>
