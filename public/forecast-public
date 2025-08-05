@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forecast - CoreLord</title>
+  <link rel="stylesheet" href="Nav.css" />
+  <style>
+    .cl-container {
+      padding: 2rem;
+      color: #ffffff;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+    }
+
+    pre {
+      background: #161b22;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="cl-container">
+    <h1>7-Day Public Forecast</h1>
+    <p>This page shows publicly cached data for a predefined surf break. The data is sourced from Stormglass.</p>
+    <pre id="forecastJson">Loading forecast...</pre>
+  </div>
+
+  <script src="Nav.js"></script>
+  <script>
+    async function loadForecast() {
+      const breakId = 15; // default: Ribeira d’Ilhas
+      const hours = 168;
+
+      try {
+        const res = await fetch(`/api/forecast/timeseries?breakId=${breakId}&hours=${hours}`);
+        const json = await res.json();
+        document.getElementById("forecastJson").textContent = JSON.stringify(json, null, 2);
+      } catch (err) {
+        document.getElementById("forecastJson").textContent = "Failed to load forecast data.";
+        console.error("Error loading forecast:", err);
+      }
+    }
+
+    loadForecast();
+  </script>
+</body>
+</html>
