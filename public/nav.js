@@ -3,10 +3,11 @@
 
 (function () {
   const links = [
-    { href: "/dashboard.html", text: "Dashboard", match: p => p === "/dashboard.html" },
-    { href: "/profile.html",   text: "Profile",   match: p => p === "/profile.html" },
+    { href: "/dashboard.html",     text: "Dashboard",     match: p => p === "/dashboard.html" },
+    { href: "/profile.html",       text: "Profile",       match: p => p === "/profile.html" },
     // Treat any planner path as active for this link
-    { href: "/planner-setup.html", text: "Planner Setup", match: p => p.startsWith("/planner") }
+    { href: "/planner-setup.html", text: "Planner Setup", match: p => p.startsWith("/planner") },
+    { href: "/preferences.html",   text: "Preferences",   match: p => p === "/preferences.html" }
   ];
 
   const hideOn = ["/index.html", "/"]; // do not render on splash
@@ -17,7 +18,7 @@
       // normalise index
       if (s === "") s = "/";
       if (s.endsWith("/index.html")) s = s.slice(0, -"/index.html".length) || "/";
-      // some hosts may serve without .html
+      // if no extension and not root, assume .html
       if (!s.endsWith(".html") && s !== "/") s = s + ".html";
       return s;
     } catch {
@@ -67,7 +68,6 @@
         a.href = l.href;
         a.textContent = l.text;
 
-        // active detection
         if (l.match(norm(location.pathname))) {
           a.classList.add("active");
         }

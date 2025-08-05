@@ -1,4 +1,4 @@
-// Planner Setup – reads and writes preferences via the API
+// Planner Setup reads and writes preferences via the API
 // Use local names so we do not clash with any globals declared in the page.
 const API_BASE_URL = (window.API_BASE ||
   "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/planner");
@@ -144,7 +144,7 @@ function writeForm(p) {
   f.maxTide.value = p?.MaxTideM ?? "";
 }
 
-// Boot
+// Boot with deep link support
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     log("Boot start. API_BASE_URL:", API_BASE_URL);
@@ -159,8 +159,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     const token = await acquireApiToken(account);
 
+    // Read query params for deep linking
+    const params = new URLSearchParams(location.search);
+    const qRegion = params.get("region");
+    const qBreakId = params.get("breakId");
+
     await loadRegions(token);
+
+    // If a region is specified, select it before loading breaks
+    if (qRegion) {
+      const match = Array.from(regionSel.options).some(o => o.value === qRegion);
+      if (match) regionSel.value = qRegion;
+    }
+
     await loadBreaks(token);
+
+    // If a breakId is specified, select it if present
+    if (qBreakId) {
+      const match = Array.from(breakSel.options).some(o => o.value === String(qBreakId));
+      if (match) breakSel.value = String(qBreakId);
+    }
 
     const existing = await apiGet(`${API_BASE_URL}/prefs?breakId=${breakSel.value}`, token);
     writeForm(existing);

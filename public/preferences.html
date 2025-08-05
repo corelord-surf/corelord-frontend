@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CoreLord Preferences</title>
+  <link rel="stylesheet" href="/nav.css">
+  <script src="/nav.js" defer></script>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0d1117; color:#fff; margin:0; }
+    .wrap { max-width:1100px; margin:0 auto; padding:1.5rem; }
+    h1 { margin:0 0 1rem 0; }
+    .row { display:flex; gap:0.75rem; align-items:center; margin-bottom:1rem; }
+    select { padding:0.5rem; border:none; border-radius:6px; }
+    table { width:100%; border-collapse:collapse; background:#161b22; border-radius:8px; overflow:hidden; }
+    th, td { padding:0.75rem; border-bottom:1px solid #30363d; text-align:left; }
+    th { background:#0f1720; }
+    .muted { color:#8b949e; }
+    .btn { padding:0.4rem 0.75rem; border:none; border-radius:6px; cursor:pointer; }
+    .btn-primary { background:#238636; color:#fff; }
+    .btn-secondary { background:#fff; color:#0d1117; }
+    .btn-danger { background:#da3633; color:#fff; }
+    a { color:#58a6ff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Your saved preferences</h1>
+    <div class="row">
+      <label for="region">Region</label>
+      <select id="region">
+        <option value="">All</option>
+        <option value="Ericeira">Ericeira</option>
+        <option value="Torquay">Torquay</option>
+      </select>
+      <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
+      <a href="/planner-setup.html" class="btn btn-primary">Add or edit in Planner Setup</a>
+    </div>
+
+    <table id="prefsTable">
+      <thead>
+        <tr>
+          <th>Break</th>
+          <th>Height m</th>
+          <th>Period s</th>
+          <th>Swell dirs</th>
+          <th>Wind kt dirs</th>
+          <th>Tide m</th>
+          <th class="muted">Score</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="prefsBody">
+        <tr><td colspan="8" class="muted">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script src="https://alcdn.msauth.net/browser/2.38.2/js/msal-browser.min.js"></script>
+  <script src="/preferences.js"></script>
+</body>
+</html>
