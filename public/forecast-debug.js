@@ -37,18 +37,28 @@ async function acquireToken() {
   }
 }
 
+// Show the backend error body instead of only the status code
 async function apiGet(path) {
   const token = await acquireToken();
   const res = await fetch(`${API_BASE_URL}${path}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
-  if (!res.ok) throw new Error(`GET ${path} ${res.status}`);
-  return res.json();
+  const text = await res.text();
+  if (!res.ok) {
+    // Try to extract a JSON message if present
+    try {
+      const json = JSON.parse(text);
+      throw new Error(`GET ${path} ${res.status}: ${json.message || text}`);
+    } catch {
+      throw new Error(`GET ${path} ${res.status}: ${text}`);
+    }
+  }
+  try { return JSON.parse(text); } catch { return text; }
 }
 
 function showRaw(obj) {
   tsTable.style.display = "none";
-  out.textContent = JSON.stringify(obj, null, 2);
+  out.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
 }
 
 function showTs(json) {
