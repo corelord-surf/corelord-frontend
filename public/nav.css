@@ -9,6 +9,11 @@
   --cl-border: #30363d;
 }
 
+/* 🔸 Base typography: make all pages share the same font */
+html, body {
+  font-family: Arial, sans-serif;
+}
+
 body.cl-with-nav {
   margin: 0;
   background: var(--cl-bg);
