@@ -14,9 +14,9 @@
       --panel: #161b22;
       --text: #e6edf3;
       --muted: #9da7b1;
-      --primary: #58a6ff;   /* wave */
-      --secondary: #ffa657; /* wind */
-      --accent: #7ee787;    /* tide */
+      --primary: #58a6ff;
+      --secondary: #ffa657;
+      --accent: #7ee787; /* tide */
       --danger: #ff7b72;
       --border: #30363d;
     }
@@ -30,18 +30,7 @@
     header { padding: 24px 20px 8px; }
     h1 { margin: 0 0 12px; font-size: 28px; font-weight: 700; }
 
-    .toolbar {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: 1fr auto auto;
-      align-items: center;
-    }
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .select, .btn {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -52,7 +41,8 @@
     }
     .btn { cursor: pointer; }
     .btn.active { outline: 2px solid var(--primary); }
-    .meta { color: var(--muted); font-size: 13px; }
+
+    .meta { color: var(--muted); font-size: 13px; margin-top: 8px; }
 
     main { padding: 14px 20px 28px; }
     .card {
@@ -61,20 +51,13 @@
       border-radius: 10px;
       padding: 14px;
     }
+
     .legend {
-      display: flex;
-      gap: 14px;
-      align-items: center;
-      margin-bottom: 8px;
-      color: var(--muted);
-      font-size: 13px;
-      flex-wrap: wrap;
+      display: flex; gap: 14px; align-items: center; margin-bottom: 8px;
+      color: var(--muted); font-size: 13px;
     }
     .legend label {
-      display: inline-flex;
-      gap: 6px;
-      align-items: center;
-      cursor: pointer;
+      display: inline-flex; gap: 6px; align-items: center; cursor: pointer;
     }
     .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
     .dot.wave { background: var(--primary); }
@@ -96,21 +79,19 @@
   <header>
     <h1>Public Forecast</h1>
 
-    <div class="toolbar">
-      <div class="row">
-        <label for="breakSelect">Surf Break</label>
-        <select id="breakSelect" class="select"></select>
-        <button id="btnRefresh" class="btn">Refresh</button>
-      </div>
+    <div class="row">
+      <label for="breakSelect">Surf Break</label>
+      <select id="breakSelect" class="select"></select>
 
-      <div class="row">
-        <!-- Relabeled: Daily = next 24h (hourly points), Weekly = next 7 days (aggregated) -->
-        <button id="btnDaily"  class="btn">Daily (24h)</button>
-        <button id="btnWeekly" class="btn active">Weekly (7d)</button>
-      </div>
+      <button id="btnRefresh" class="btn">Refresh</button>
 
-      <div class="meta" id="metaInfo"></div>
+      <div style="flex:1"></div>
+
+      <button id="btnDaily"  class="btn">Daily (24h)</button>
+      <button id="btnWeekly" class="btn active">Weekly (7d)</button>
     </div>
+
+    <div class="meta" id="metaInfo"></div>
   </header>
 
   <main>
@@ -121,7 +102,7 @@
         <label><span class="dot tide"></span><input type="checkbox" id="chkTide" checked /> Tide / Sea level (m)</label>
       </div>
 
-      <canvas id="forecastChart" height="110"></canvas>
+      <canvas id="forecastChart" height="120"></canvas>
       <div id="errorBox" class="error">Failed to load forecast data.</div>
     </div>
   </main>
