@@ -1,12 +1,12 @@
 /* Forecast Public UI - CoreLord
- * Uses shared nav.js/nav.css for layout uniformity
- * Buttons: #btnDaily (24h), #btnWeekly (168h)
+ * Requests 168h from the API always (matches cache),
+ * then renders either Daily (first 24h) or Weekly (7 days aggregated).
  */
 
 (() => {
   const API_URL = "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net";
 
-  // Add/remove breaks here.
+  // If you want to add/remove breaks, do it here.
   const BREAKS = [
     { id: 15, name: "Ribeira D'ilhas" },
     { id: 2,  name: "Cave" },
@@ -16,7 +16,7 @@
     { id: 46, name: "Torquay Point" },
   ];
 
-  // ---- DOM ----
+  // ---- Grab DOM ----
   const $ = (id) => document.getElementById(id);
   const els = {
     breakSelect: $("breakSelect"),
@@ -31,7 +31,7 @@
     errorBox: $("errorBox"),
   };
 
-  // Populate break dropdown once
+  // Populate break select (only if empty)
   if (els.breakSelect && !els.breakSelect.options.length) {
     for (const b of BREAKS) {
       const opt = document.createElement("option");
@@ -41,63 +41,13 @@
     }
   }
 
-  // Chart instance
+  // ---- Chart setup ----
   let chart = null;
   const ctx = els.canvas ? els.canvas.getContext("2d") : null;
-
-  // Small helpers
-  const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
-  const setStatus = (text) => { if (els.metaInfo) els.metaInfo.textContent = text; };
-  const setError = (msg) => {
-    if (!els.errorBox) return;
-    if (msg) {
-      els.errorBox.textContent = msg;
-      els.errorBox.style.display = "block";
-    } else {
-      els.errorBox.style.display = "none";
-    }
-  };
-
-  // X-axis formatting
-  const tsToHourLabel = (sec) =>
-    new Date(sec * 1000).toLocaleString(undefined, { weekday: "short", hour: "2-digit", minute: "2-digit" });
-
-  // Group to daily for weekly view
-  function groupDaily(items) {
-    const byDay = new Map(); // YYYY-MM-DD -> { wave:[], wind:[], tide:[], sampleTs: number }
-    for (const it of items) {
-      const d = new Date(it.ts * 1000);
-      const key = d.toISOString().slice(0, 10);
-      let row = byDay.get(key);
-      if (!row) {
-        row = { wave: [], wind: [], tide: [], sampleTs: it.ts };
-        byDay.set(key, row);
-      }
-      if (typeof it.waveHeightM === "number") row.wave.push(it.waveHeightM);
-      if (typeof it.windSpeedKt === "number") row.wind.push(it.windSpeedKt);
-      if (typeof it.tideM === "number") row.tide.push(it.tideM);
-    }
-
-    // preserve order by day
-    const days = [...byDay.entries()].sort((a, b) => a[1].sampleTs - b[1].sampleTs);
-    const labels = [];
-    const wave = [];
-    const wind = [];
-    const tide = [];
-    for (const [, v] of days) {
-      labels.push(new Date(v.sampleTs * 1000).toLocaleDateString(undefined, { weekday: "short", day: "2-digit" }));
-      wave.push(v.wave.length ? Math.max(...v.wave) : null);
-      wind.push(v.wind.length ? Math.max(...v.wind) : null);
-      tide.push(v.tide.length ? avg(v.tide) : null);
-    }
-    return { labels, wave, wind, tide };
-  }
 
   function makeChart(labels, series, mode) {
     if (!ctx) return;
     if (chart) chart.destroy();
-
-    const maxTicks = mode === "weekly" ? 7 : 10;
 
     chart = new Chart(ctx, {
       type: "line",
@@ -107,25 +57,31 @@
           {
             label: "Wave Height (m)",
             data: series.wave,
-            yAxisID: "yWave",
             borderWidth: 2,
             tension: 0.3,
+            yAxisID: "yWave",
+            borderColor: getComputedStyle(document.documentElement).getPropertyValue("--primary") || "#58a6ff",
+            pointRadius: 2,
             hidden: !els.chkWave?.checked,
           },
           {
             label: "Wind Speed (kt)",
             data: series.wind,
-            yAxisID: "yWind",
             borderWidth: 2,
             tension: 0.3,
+            yAxisID: "yWind",
+            borderColor: getComputedStyle(document.documentElement).getPropertyValue("--secondary") || "#ffa657",
+            pointRadius: 2,
             hidden: !els.chkWind?.checked,
           },
           {
             label: "Tide / Sea level (m)",
             data: series.tide,
-            yAxisID: "yTide",
             borderWidth: 2,
             tension: 0.3,
+            yAxisID: "yTide",
+            borderColor: getComputedStyle(document.documentElement).getPropertyValue("--accent") || "#7ee787",
+            pointRadius: 2,
             hidden: !els.chkTide?.checked,
           },
         ],
@@ -135,12 +91,18 @@
         animation: false,
         interaction: { mode: "index", intersect: false },
         plugins: {
-          legend: { labels: { color: "#e6edf3" } },
+          legend: { labels: { color: "#c9d1d9" } },
+          tooltip: {},
         },
         scales: {
           x: {
-            ticks: { color: "#9aa0a6", autoSkip: true, maxTicksLimit: maxTicks },
-            grid: { color: "rgba(255,255,255,0.06)" },
+            ticks: {
+              color: "#9aa0a6",
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: mode === "daily" ? 10 : 7, // keep x labels readable
+            },
+            grid: { color: "rgba(255,255,255,0.05)" },
           },
           yWave: {
             position: "left",
@@ -166,86 +128,131 @@
     });
   }
 
-  // Toggle dataset visibility when checkboxes change
-  [["chkWave", 0], ["chkWind", 1], ["chkTide", 2]].forEach(([id, idx]) => {
-    const el = els[id];
-    if (el) {
-      el.addEventListener("change", () => {
-        if (!chart) return;
-        chart.setDatasetVisibility(idx, el.checked);
-        chart.update();
-      });
-    }
-  });
+  // Checkbox toggles
+  els.chkWave?.addEventListener("change", () => { if (!chart) return; chart.data.datasets[0].hidden = !els.chkWave.checked; chart.update(); });
+  els.chkWind?.addEventListener("change", () => { if (!chart) return; chart.data.datasets[1].hidden = !els.chkWind.checked; chart.update(); });
+  els.chkTide?.addEventListener("change", () => { if (!chart) return; chart.data.datasets[2].hidden = !els.chkTide.checked; chart.update(); });
 
-  // Fetch + shape
-  async function loadForecast({ breakId, hours }) {
-    const url = `${API_URL}/api/forecast/timeseries?breakId=${breakId}&hours=${hours}&includeTide=1`;
+  // ---- Helpers ----
+  const tsToLabelHour = (sec) => {
+    const d = new Date(sec * 1000);
+    return d.toLocaleString(undefined, { weekday: "short", hour: "2-digit", minute: "2-digit" });
+  };
+  const tsToLabelDay = (sec) => {
+    const d = new Date(sec * 1000);
+    return d.toLocaleDateString(undefined, { weekday: "short", day: "2-digit" });
+  };
+  const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
+
+  // Build series for the first 24 hours
+  function shapeDaily24(items) {
+    const take = Math.min(24, items.length);
+    const slice = items.slice(0, take);
+    return {
+      labels: slice.map((i) => tsToLabelHour(i.ts)),
+      wave: slice.map((i) => i.waveHeightM ?? null),
+      wind: slice.map((i) => i.windSpeedKt ?? null),
+      tide: slice.map((i) => i.tideM ?? null),
+    };
+  }
+
+  // Aggregate into 7 daily buckets (max wave/wind, avg tide)
+  function shapeWeekly(items) {
+    // group by UTC day
+    const byDay = new Map();
+    for (const it of items) {
+      const dayKey = new Date(it.ts * 1000).toISOString().slice(0, 10);
+      let row = byDay.get(dayKey);
+      if (!row) { row = { ts: it.ts, wave: [], wind: [], tide: [] }; byDay.set(dayKey, row); }
+      row.ts = Math.min(row.ts, it.ts);
+      if (typeof it.waveHeightM === "number") row.wave.push(it.waveHeightM);
+      if (typeof it.windSpeedKt === "number") row.wind.push(it.windSpeedKt);
+      if (typeof it.tideM === "number") row.tide.push(it.tideM);
+    }
+    // sort by earliest timestamp & take first 7
+    const days = [...byDay.values()].sort((a, b) => a.ts - b.ts).slice(0, 7);
+
+    return {
+      labels: days.map((d) => tsToLabelDay(d.ts)),
+      wave: days.map((d) => d.wave.length ? Math.max(...d.wave) : null),
+      wind: days.map((d) => d.wind.length ? Math.max(...d.wind) : null),
+      tide: days.map((d) => d.tide.length ? avg(d.tide) : null),
+    };
+  }
+
+  function setStatus(text) {
+    if (els.metaInfo) els.metaInfo.textContent = text;
+  }
+
+  function showError(msg) {
+    if (!els.errorBox) return;
+    els.errorBox.style.display = "block";
+    els.errorBox.textContent = msg;
+  }
+  function clearError() {
+    if (!els.errorBox) return;
+    els.errorBox.style.display = "none";
+  }
+
+  // ---- Networking ----
+  async function loadForecast168(breakId) {
+    const url = `${API_URL}/api/forecast/timeseries?breakId=${breakId}&hours=168&includeTide=1`;
+    console.log("[forecast] GET", url);
     const t0 = performance.now();
     const res = await fetch(url, { cache: "no-store" });
     const txt = await res.text();
     const ms = Math.round(performance.now() - t0);
-
     if (!res.ok) {
+      console.error("[forecast] HTTP", res.status, txt.slice(0, 200));
       throw new Error(`HTTP ${res.status}`);
     }
-    let data = JSON.parse(txt);
+    let data;
+    try { data = JSON.parse(txt); }
+    catch (e) { console.error("[forecast] Bad JSON:", txt.slice(0, 200)); throw e; }
+    console.log("[forecast] ok in", ms, "ms", "| items:", data?.items?.length ?? 0);
     return { data, ms };
   }
 
-  function shapeHourly(items) {
-    const labels = items.map(i => tsToHourLabel(i.ts));
-    const wave = items.map(i => i.waveHeightM ?? null);
-    const wind = items.map(i => i.windSpeedKt ?? null);
-    const tide = items.map(i => i.tideM ?? null);
-    return { labels, wave, wind, tide };
-  }
+  async function refresh(mode /* 'daily' | 'weekly' */) {
+    const breakId = parseInt(els.breakSelect?.value || "15", 10);
 
-  // UI state
-  let mode = "weekly"; // default to weekly so users see 7d immediately
-
-  function setMode(next) {
-    mode = next;
-    els.btnDaily?.classList.toggle("active", mode === "daily");
-    els.btnWeekly?.classList.toggle("active", mode === "weekly");
-    refresh();
-  }
-
-  async function refresh() {
+    clearError();
+    setStatus("Loading...");
     try {
-      setError("");
-      const breakId = parseInt(els.breakSelect?.value || "15", 10);
-      const hours = mode === "daily" ? 24 : 168;
-
-      setStatus("Loading…");
-      const { data, ms } = await loadForecast({ breakId, hours });
+      const { data, ms } = await loadForecast168(breakId);
 
       const name = data?.break?.name || data?.break?.Name || `#${breakId}`;
       setStatus(`${name} • ${data?.hours ?? "?"}h • fromCache: ${data?.fromCache ? "yes" : "no"} • ${ms}ms`);
 
       const items = Array.isArray(data?.items) ? data.items : [];
-      if (!items.length) {
-        setError("No forecast data available.");
-        if (chart) { chart.destroy(); chart = null; }
-        return;
-      }
+      const series = mode === "daily" ? shapeDaily24(items) : shapeWeekly(items);
 
-      const series = mode === "weekly" ? groupDaily(items) : shapeHourly(items);
       makeChart(series.labels, series, mode);
     } catch (e) {
       setStatus("Load failed");
-      setError(e.message || String(e));
-      if (chart) { chart.destroy(); chart = null; }
-      console.error("[forecast-public] error:", e);
+      showError(e.message || String(e));
+      if (chart) {
+        chart.data.labels = [];
+        chart.data.datasets.forEach(d => d.data = []);
+        chart.update();
+      }
     }
   }
 
-  // Wire events
-  els.btnRefresh?.addEventListener("click", refresh);
-  els.breakSelect?.addEventListener("change", refresh);
+  // ---- Events & initial mode ----
+  let activeMode = "weekly"; // default to weekly
+  function setMode(next) {
+    activeMode = next;
+    els.btnDaily?.classList.toggle("active", next === "daily");
+    els.btnWeekly?.classList.toggle("active", next === "weekly");
+    refresh(activeMode);
+  }
+
+  els.btnRefresh?.addEventListener("click", () => refresh(activeMode));
+  els.breakSelect?.addEventListener("change", () => refresh(activeMode));
   els.btnDaily?.addEventListener("click", () => setMode("daily"));
   els.btnWeekly?.addEventListener("click", () => setMode("weekly"));
 
-  // Initial load
+  // Initial draw
   setMode("weekly");
 })();
