@@ -30,9 +30,18 @@
     header { padding: 24px 20px 8px; }
     h1 { margin: 0 0 12px; font-size: 28px; font-weight: 700; }
 
-    .toolbar { display: grid; gap: 12px; grid-template-columns: 1fr; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-
+    .toolbar {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
     .select, .btn {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -43,7 +52,6 @@
     }
     .btn { cursor: pointer; }
     .btn.active { outline: 2px solid var(--primary); }
-
     .meta { color: var(--muted); font-size: 13px; }
 
     main { padding: 14px 20px 28px; }
@@ -54,11 +62,20 @@
       padding: 14px;
     }
     .legend {
-      display: flex; gap: 14px; align-items: center;
-      margin-bottom: 8px; color: var(--muted); font-size: 13px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
       flex-wrap: wrap;
     }
-    .legend label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+    .legend label {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      cursor: pointer;
+    }
     .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
     .dot.wave { background: var(--primary); }
     .dot.wind { background: var(--secondary); }
@@ -73,10 +90,6 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       display: none;
     }
-
-    @media (min-width: 720px) {
-      .toolbar { grid-template-columns: 1fr auto auto; align-items: center; }
-    }
   </style>
 </head>
 <body>
@@ -87,11 +100,13 @@
       <div class="row">
         <label for="breakSelect">Surf Break</label>
         <select id="breakSelect" class="select"></select>
-
-        <button id="btnHourly" class="btn active">Hourly</button>
-        <button id="btnDaily" class="btn">Daily</button>
-
         <button id="btnRefresh" class="btn">Refresh</button>
+      </div>
+
+      <div class="row">
+        <!-- Relabeled: Daily = next 24h (hourly points), Weekly = next 7 days (aggregated) -->
+        <button id="btnDaily"  class="btn">Daily (24h)</button>
+        <button id="btnWeekly" class="btn active">Weekly (7d)</button>
       </div>
 
       <div class="meta" id="metaInfo"></div>
@@ -111,7 +126,6 @@
     </div>
   </main>
 
-  <!-- Page logic -->
   <script src="./forecast-public.js"></script>
 </body>
 </html>
