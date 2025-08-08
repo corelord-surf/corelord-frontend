@@ -5,32 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Public Forecast - CoreLord</title>
 
+  <!-- Use the same nav styles/site theme as other pages -->
+  <link rel="stylesheet" href="./nav.css">
+
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
   <style>
     :root {
-      --bg: #0d1117;
       --panel: #161b22;
       --text: #e6edf3;
       --muted: #9da7b1;
       --primary: #58a6ff;
+      --accent: #7ee787;
       --secondary: #ffa657;
-      --accent: #7ee787; /* tide */
-      --danger: #ff7b72;
       --border: #30363d;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    }
     header { padding: 24px 20px 8px; }
-    h1 { margin: 0 0 12px; font-size: 28px; font-weight: 700; }
-
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    header h1 { margin: 0 0 12px; font-size: 28px; font-weight: 700; }
+    .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .select, .btn {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -41,8 +34,7 @@
     }
     .btn { cursor: pointer; }
     .btn.active { outline: 2px solid var(--primary); }
-
-    .meta { color: var(--muted); font-size: 13px; margin-top: 8px; }
+    .meta { color: var(--muted); font-size: 13px; margin-top: 6px; }
 
     main { padding: 14px 20px 28px; }
     .card {
@@ -51,14 +43,11 @@
       border-radius: 10px;
       padding: 14px;
     }
-
     .legend {
-      display: flex; gap: 14px; align-items: center; margin-bottom: 8px;
-      color: var(--muted); font-size: 13px;
+      display: flex; gap: 14px; align-items: center;
+      margin-bottom: 8px; color: var(--muted); font-size: 13px;
     }
-    .legend label {
-      display: inline-flex; gap: 6px; align-items: center; cursor: pointer;
-    }
+    .legend label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
     .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
     .dot.wave { background: var(--primary); }
     .dot.wind { background: var(--secondary); }
@@ -66,8 +55,8 @@
 
     .error {
       margin-top: 10px;
-      border: 1px dashed var(--danger);
-      color: var(--danger);
+      border: 1px dashed #ff7b72;
+      color: #ff7b72;
       padding: 10px;
       border-radius: 8px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -76,21 +65,20 @@
   </style>
 </head>
 <body>
+  <!-- nav.js will inject the left nav and wrap this content automatically -->
   <header>
     <h1>Public Forecast</h1>
-
-    <div class="row">
+    <div class="toolbar">
       <label for="breakSelect">Surf Break</label>
       <select id="breakSelect" class="select"></select>
 
       <button id="btnRefresh" class="btn">Refresh</button>
 
-      <div style="flex:1"></div>
-
-      <button id="btnDaily"  class="btn">Daily (24h)</button>
-      <button id="btnWeekly" class="btn active">Weekly (7d)</button>
+      <div style="margin-left:auto; display:flex; gap:8px;">
+        <button id="btnDaily"  class="btn">Daily (24h)</button>
+        <button id="btnWeekly" class="btn">Weekly (7d)</button>
+      </div>
     </div>
-
     <div class="meta" id="metaInfo"></div>
   </header>
 
@@ -102,11 +90,15 @@
         <label><span class="dot tide"></span><input type="checkbox" id="chkTide" checked /> Tide / Sea level (m)</label>
       </div>
 
-      <canvas id="forecastChart" height="120"></canvas>
+      <canvas id="forecastChart" height="110"></canvas>
       <div id="errorBox" class="error">Failed to load forecast data.</div>
     </div>
   </main>
 
+  <!-- Shared nav logic (auto-injects the sidebar and wraps content) -->
+  <script src="./nav.js"></script>
+
+  <!-- Page logic -->
   <script src="./forecast-public.js"></script>
 </body>
 </html>
