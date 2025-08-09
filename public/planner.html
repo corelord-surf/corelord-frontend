@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/nav.css">
+  <script src="/nav.js" defer></script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoreLord Surf Planner</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0d1117;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    h1, h2 {
+      margin: 0 0 1rem 0;
+    }
+    .card {
+      background-color: #161b22;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 1100px;
+      padding: 1.25rem;
+      margin-top: 1rem;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 1rem; }
+    .col { display: flex; flex-direction: column; gap: 0.5rem; min-width: 220px; }
+    label { font-size: 0.9rem; color: #c9d1d9; }
+    input, select {
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      background: #0d1117;
+      color: #fff;
+    }
+    button {
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      border: 1px solid #238636;
+      background: #238636;
+      color: #fff;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid #30363d;
+    }
+    th { color: #c9d1d9; font-weight: 600; }
+    #status { margin: 8px 0; color: #8b949e; }
+    .muted { color: #8b949e; font-size: 0.9rem; }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #30363d;
+      font-size: 0.8rem;
+      color: #c9d1d9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Surf Planner</h1>
+
+  <!-- Preferences -->
+  <div class="card">
+    <h2 style="margin-top:0;">Your preferences</h2>
+    <div class="row">
+      <div class="col">
+        <label for="prefMinWave">Min wave height m</label>
+        <input id="prefMinWave" type="number" step="0.1" value="0.8">
+      </div>
+      <div class="col">
+        <label for="prefMaxWave">Max wave height m</label>
+        <input id="prefMaxWave" type="number" step="0.1" value="2.0">
+      </div>
+      <div class="col">
+        <label for="prefMinPeriod">Min swell period s</label>
+        <input id="prefMinPeriod" type="number" step="0.5" value="8">
+      </div>
+      <div class="col">
+        <label for="prefMaxWind">Max wind speed kts</label>
+        <input id="prefMaxWind" type="number" step="0.5" value="15">
+      </div>
+      <div class="col">
+        <label for="prefRegions">Regions</label>
+        <select id="prefRegions" multiple size="3" title="Hold Ctrl or Cmd to select many">
+          <option>Ericeira</option>
+          <option>Torquay</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" style="margin-top:0.75rem;">
+      <div class="col">
+        <label for="prefDays">Plan days</label>
+        <select id="prefDays">
+          <option value="3">Next 3 days</option>
+          <option value="5" selected>Next 5 days</option>
+          <option value="7">Next 7 days</option>
+        </select>
+      </div>
+      <div class="col">
+        <label for="prefTimeOfDay">Time of day</label>
+        <select id="prefTimeOfDay">
+          <option value="any" selected>Any</option>
+          <option value="morning">Morning</option>
+          <option value="afternoon">Afternoon</option>
+          <option value="evening">Evening</option>
+        </select>
+      </div>
+      <div class="col" style="align-self:flex-end;">
+        <button id="savePrefsBtn" type="button">Save preferences</button>
+      </div>
+      <div class="col" style="align-self:flex-end;">
+        <button id="planBtn" type="button">Plan my sessions</button>
+      </div>
+    </div>
+    <p class="muted">Preferences are stored in your browser for now. We can sync these to your profile later.</p>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between; align-items:center;">
+      <h2 style="margin-top:0;">Recommended sessions</h2>
+      <span id="status"></span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Break</th>
+          <th>Region</th>
+          <th>Wave m</th>
+          <th>Period s</th>
+          <th>Wind kts</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+  <script src="planner.js"></script>
+</body>
+</html>

@@ -2,7 +2,8 @@
   const links = [
     { href: "/dashboard.html",       text: "Dashboard",       match: p => p === "/dashboard.html" },
     { href: "/profile.html",         text: "Profile",         match: p => p === "/profile.html" },
-    { href: "/planner-setup.html",   text: "Planner Setup",   match: p => p.startsWith("/planner") },
+    { href: "/planner.html",         text: "Surf Planner",    match: p => p === "/planner.html" },
+    { href: "/planner-setup.html",   text: "Planner Setup",   match: p => p === "/planner-setup.html" },
     { href: "/preferences.html",     text: "Preferences",     match: p => p === "/preferences.html" },
     { href: "/availability.html",    text: "Availability",    match: p => p === "/availability.html" },
     { href: "/forecast-debug.html",  text: "Forecast Debug",  match: p => p === "/forecast-debug.html" },
