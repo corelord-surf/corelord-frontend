@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="/nav.css">
-<script src="/nav.js" defer></script>
+  <link rel="stylesheet" href="/nav.css">
+  <script src="/nav.js" defer></script>
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -25,13 +25,14 @@
       max-width: 520px;
       flex: 1;
     }
-    label { display: block; margin-top: 0.75rem; }
+    label { display: block; margin-top: 0.75rem; color:#c9d1d9; }
     select, input {
       width: 100%;
       padding: 0.5rem;
       margin-top: 0.25rem;
       border-radius: 4px;
-      border: none;
+      border: 1px solid #30363d;
+      background:#0d1117; color:#fff;
     }
     fieldset {
       border: 1px solid #30363d;
@@ -39,7 +40,7 @@
       margin-top: 0.75rem;
       padding: 0.5rem 0.75rem;
     }
-    legend { padding: 0 0.25rem; }
+    legend { padding: 0 0.25rem; color:#c9d1d9; }
     .checks { display: grid; grid-template-columns: repeat(4, minmax(50px, 1fr)); gap: 0.5rem; }
     .actions { margin-top: 1rem; display: flex; gap: 0.75rem; }
     button {
@@ -50,16 +51,19 @@
     }
     .primary { background-color: #238636; color: #fff; }
     .secondary { background-color: #fff; color: #0d1117; }
-    #status { margin-top: 0.75rem; }
+    #status { margin-top: 0.75rem; color:#8b949e; }
     a { color: #58a6ff; }
   </style>
 </head>
 <body>
   <h1>Planner Setup</h1>
-  <p>Choose a region and break, then set your preferred conditions. Saved to your account.</p>
+  <p>Choose a country, region and break, then set your preferred conditions. Saved to your account.</p>
 
   <div class="row">
     <div class="card">
+      <label for="country">Country</label>
+      <select id="country"></select>
+
       <label for="region">Region</label>
       <select id="region"></select>
 
@@ -140,6 +144,7 @@
   <script>
     const API_BASE = "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/planner";
     const API_SCOPE = "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation";
+    const FORECAST_BASE = "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/forecast";
   </script>
   <script src="planner-setup.js"></script>
 </body>

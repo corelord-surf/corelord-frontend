@@ -6,11 +6,11 @@
     { href: "/planner-setup.html",   text: "Planner Setup",   match: p => p === "/planner-setup.html" },
     { href: "/preferences.html",     text: "Preferences",     match: p => p === "/preferences.html" },
     { href: "/availability.html",    text: "Availability",    match: p => p === "/availability.html" },
-    { href: "/forecast-debug.html",  text: "Forecast Debug",  match: p => p === "/forecast-debug.html" },
     { href: "/forecast-public.html", text: "Public Forecast", match: p => p === "/forecast-public.html" }
   ];
 
   const hideOn = ["/index.html", "/"];
+
   const norm = (p) => {
     try {
       let s = (p || location.pathname).toLowerCase().replace(/\/+$/, "");

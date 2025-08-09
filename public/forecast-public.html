@@ -27,6 +27,7 @@
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
     .mode-row{display:flex;gap:10px;justify-content:flex-end;margin-top:6px;}
 
+    label{color:var(--muted);font-size:13px;}
     .select,.btn{
       background:var(--panel); border:1px solid var(--border); color:var(--text);
       padding:10px 12px; border-radius:8px; font-size:14px; cursor:pointer;
@@ -58,8 +59,15 @@
 
       <div class="toolbar">
         <div class="row">
+          <label for="countrySelect">Country</label>
+          <select id="countrySelect" class="select"></select>
+
+          <label for="regionSelect">Region</label>
+          <select id="regionSelect" class="select"></select>
+
           <label for="breakSelect">Surf Break</label>
-          <select id="breakSelect" class="select"></select>
+          <select id="breakSelect" class="select" style="min-width:220px;"></select>
+
           <button id="btnRefresh" class="btn">Refresh</button>
         </div>
 

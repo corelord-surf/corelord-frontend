@@ -1,7 +1,10 @@
 // Planner Setup reads and writes preferences via the API
-// Use local names so we do not clash with any globals declared in the page.
+// Now sources Country → Region → Break from /api/forecast/breaks
+
 const API_BASE_URL = (window.API_BASE ||
   "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/planner");
+const FORECAST_BASE = (window.FORECAST_BASE ||
+  "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/forecast");
 const API_SCOPE_VALUE = (window.API_SCOPE ||
   "api://207b8fba-ea72-43e3-8c90-b3a39e58f5fc/user_impersonation");
 
@@ -19,10 +22,11 @@ const msalInstance = new msal.PublicClientApplication(msalConfig);
 const DIRS = ["N","NE","E","SE","S","SW","W","NW"];
 
 // Elements
-const regionSel = document.getElementById("region");
-const breakSel = document.getElementById("break");
+const countrySel = document.getElementById("country");
+const regionSel  = document.getElementById("region");
+const breakSel   = document.getElementById("break");
 const swellDirsDiv = document.getElementById("swellDirs");
-const windDirsDiv = document.getElementById("windDirs");
+const windDirsDiv  = document.getElementById("windDirs");
 const statusEl = document.getElementById("status");
 
 // Form fields
@@ -75,7 +79,8 @@ async function acquireApiToken(account) {
 }
 
 async function apiGet(url, token) {
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const res = await fetch(url, { headers });
   if (res.status === 204 || res.status === 404) return null;
   if (!res.ok) throw new Error(`${url} failed ${res.status}`);
   return res.json();
@@ -93,29 +98,67 @@ async function apiPost(url, token, body) {
   return res.json();
 }
 
-async function loadRegions(token) {
-  const regs = await apiGet(`${API_BASE_URL}/regions`, token);
-  regionSel.innerHTML = "";
-  regs.forEach(r => {
-    const opt = document.createElement("option");
-    opt.value = r.name;
-    opt.textContent = r.name;
-    regionSel.appendChild(opt);
-  });
-  log("Regions loaded:", regs.map(r => r.name));
+// Breaks cache + cascading filters
+let allBreaks = [];
+
+async function loadAllBreaks() {
+  const list = await apiGet(`${FORECAST_BASE}/breaks`, null);
+  allBreaks = (list || []).map(b => ({
+    id: b.id ?? b.Id,
+    name: b.name ?? b.Name,
+    region: b.region ?? b.Region ?? "",
+    country: b.country ?? b.Country ?? "",
+  }));
 }
 
-async function loadBreaks(token) {
-  const region = regionSel.value;
-  const list = await apiGet(`${API_BASE_URL}/breaks?region=${encodeURIComponent(region)}`, token);
+function fillSelect(sel, values, allLabel) {
+  if (!sel) return;
+  sel.innerHTML = "";
+  if (allLabel) {
+    const o = document.createElement("option");
+    o.value = "";
+    o.textContent = allLabel;
+    sel.appendChild(o);
+  }
+  values.forEach(v => {
+    const o = document.createElement("option");
+    o.value = v;
+    o.textContent = v || "(Unknown)";
+    sel.appendChild(o);
+  });
+  if (sel.options.length > 1) sel.value = sel.options[1].value;
+}
+
+function populateCountries() {
+  const countries = Array.from(new Set(allBreaks.map(b => b.country || "Unknown"))).sort();
+  fillSelect(countrySel, countries, "(All countries)");
+}
+
+function populateRegions() {
+  const c = countrySel.value || "";
+  const regs = Array.from(new Set(allBreaks
+                    .filter(b => !c || b.country === c)
+                    .map(b => b.region || ""))).sort();
+  fillSelect(regionSel, regs, "(All regions)");
+}
+
+function populateBreaks() {
+  const c = countrySel.value || "";
+  const r = regionSel.value || "";
+  const list = allBreaks
+    .filter(b => (!c || b.country === c) && (!r || b.region === r))
+    .sort((a,b) => a.name.localeCompare(b.name));
+
   breakSel.innerHTML = "";
   list.forEach(b => {
-    const opt = document.createElement("option");
-    opt.value = b.Id;
-    opt.textContent = b.Name;
-    breakSel.appendChild(opt);
+    const o = document.createElement("option");
+    o.value = String(b.id);
+    o.textContent = `${b.name}`;
+    breakSel.appendChild(o);
   });
-  log("Breaks loaded for", region, "count", list.length);
+  if (!breakSel.value && breakSel.options.length) {
+    breakSel.value = breakSel.options[0].value;
+  }
 }
 
 function readForm() {
@@ -147,7 +190,7 @@ function writeForm(p) {
 // Boot with deep link support
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    log("Boot start. API_BASE_URL:", API_BASE_URL);
+    log("Boot start.");
     renderDirChecks(swellDirsDiv);
     renderDirChecks(windDirsDiv);
 
@@ -159,33 +202,43 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     const token = await acquireApiToken(account);
 
-    // Read query params for deep linking
+    // Load breaks and setup cascading selects
+    await loadAllBreaks();
+    populateCountries();
+    populateRegions();
+    populateBreaks();
+
+    // Deep link via query params
     const params = new URLSearchParams(location.search);
     const qRegion = params.get("region");
     const qBreakId = params.get("breakId");
+    const qCountry = params.get("country");
 
-    await loadRegions(token);
-
-    // If a region is specified, select it before loading breaks
-    if (qRegion) {
-      const match = Array.from(regionSel.options).some(o => o.value === qRegion);
-      if (match) regionSel.value = qRegion;
+    if (qCountry && Array.from(countrySel.options).some(o => o.value === qCountry)) {
+      countrySel.value = qCountry; populateRegions(); populateBreaks();
+    }
+    if (qRegion && Array.from(regionSel.options).some(o => o.value === qRegion)) {
+      regionSel.value = qRegion; populateBreaks();
+    }
+    if (qBreakId && Array.from(breakSel.options).some(o => o.value === String(qBreakId))) {
+      breakSel.value = String(qBreakId);
     }
 
-    await loadBreaks(token);
-
-    // If a breakId is specified, select it if present
-    if (qBreakId) {
-      const match = Array.from(breakSel.options).some(o => o.value === String(qBreakId));
-      if (match) breakSel.value = String(qBreakId);
-    }
-
+    // Load existing prefs for selected break
     const existing = await apiGet(`${API_BASE_URL}/prefs?breakId=${breakSel.value}`, token);
     writeForm(existing);
     statusEl.textContent = existing ? "Loaded existing preferences" : "No preferences saved yet";
 
+    // Events
+    countrySel.addEventListener("change", async () => {
+      populateRegions(); populateBreaks();
+      const ex = await apiGet(`${API_BASE_URL}/prefs?breakId=${breakSel.value}`, token);
+      writeForm(ex);
+      statusEl.textContent = ex ? "Loaded existing preferences" : "No preferences saved yet";
+    });
+
     regionSel.addEventListener("change", async () => {
-      await loadBreaks(token);
+      populateBreaks();
       const ex = await apiGet(`${API_BASE_URL}/prefs?breakId=${breakSel.value}`, token);
       writeForm(ex);
       statusEl.textContent = ex ? "Loaded existing preferences" : "No preferences saved yet";

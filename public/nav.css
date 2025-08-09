@@ -9,7 +9,7 @@
   --cl-border: #30363d;
 }
 
-/* 🔸 Base typography: make all pages share the same font */
+/* Base typography */
 html, body {
   font-family: Arial, sans-serif;
 }
@@ -89,8 +89,49 @@ body.cl-with-nav #cl-nav-spacer {
   min-width: 0;
 }
 
-/* If a page already uses full width centering, this keeps it readable */
+/* If a page already uses full width centring, this keeps it readable */
 #cl-nav-content .cl-container {
   max-width: 1100px;
   margin: 0 auto;
+}
+
+/* ============================================================
+   Filter bar for Country, Region, Break
+   ============================================================ */
+.cl-filters {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: .5rem 0 1rem 0;
+  background: #0f1720;
+  border: 1px solid var(--cl-border);
+  border-radius: 8px;
+  padding: .6rem .75rem;
+}
+
+.cl-label {
+  color: var(--cl-muted);
+  font-size: .9rem;
+  margin-right: .25rem;
+}
+
+.cl-select {
+  background: var(--cl-bg);
+  color: var(--cl-text);
+  border: 1px solid var(--cl-border);
+  border-radius: 6px;
+  padding: .4rem .6rem;
+  min-width: 160px;
+}
+
+.cl-select:focus {
+  outline: none;
+  border-color: var(--cl-accent);
+  box-shadow: 0 0 0 2px rgba(88,166,255,0.15);
+}
+
+/* small screens */
+@media (max-width: 640px) {
+  .cl-select { min-width: 130px; }
 }
