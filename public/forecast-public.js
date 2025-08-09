@@ -123,10 +123,11 @@
             ticks: {
               color: "#9aa0a6",
               maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: isWeekly ? 8 : 12,
+              // IMPORTANT: weekly should not auto-skip, otherwise our day labels may be dropped
+              autoSkip: !isWeekly,
+              maxTicksLimit: isWeekly ? undefined : 12,
               callback: function (_value, index) {
-                // Weekly: only show a label at day boundaries (from tickLabelMap)
+                // Weekly: only show a label at the first occurrence of each day
                 if (isWeekly) {
                   return tickLabelMap?.get(index) ?? "";
                 }
@@ -191,7 +192,7 @@
   /**
    * Weekly: keep ALL hourly points (up to 168),
    * but only show day labels on the x-axis.
-   * We compute a map of indices where a new day starts (or the first point),
+   * We compute a map of indices where a new day starts (first point of each day),
    * and return that to the axis tick callback.
    */
   function shapeWeeklyContinuous(items) {
@@ -206,16 +207,16 @@
     for (let idx = 0; idx < items.length; idx++) {
       const it = items[idx];
       const d = new Date(it.ts * 1000);
-      const dayKey = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+      const dayKey = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 
-      // For the full series we still keep an hour-level label for tooltips.
+      // Keep an hour-level label for tooltips.
       labels.push(tsToLabelHour(it.ts));
       wave.push(typeof it.waveHeightM === "number" ? it.waveHeightM : null);
       wind.push(typeof it.windSpeedKt === "number"  ? it.windSpeedKt  : null);
       tide.push(typeof it.tideM === "number"        ? it.tideM        : null);
 
-      // Put a day tick at the first point, and whenever day changes (or local midnight)
-      if (idx === 0 || dayKey !== prevDay || d.getHours() === 0) {
+      // Mark the FIRST occurrence of each day for the x-axis tick label.
+      if (idx === 0 || dayKey !== prevDay) {
         tickLabelMap.set(idx, tsToLabelDay(it.ts));
       }
       prevDay = dayKey;
