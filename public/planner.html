@@ -126,7 +126,7 @@
         <button id="planBtn" type="button">Plan my sessions</button>
       </div>
     </div>
-    <p class="muted">Preferences are stored in your browser for now. We can sync these to your profile later.</p>
+    <p class="muted">Preferences are stored in your browser. Availability is loaded from your account if you are signed in.</p>
   </div>
 
   <!-- Results -->
@@ -151,6 +151,8 @@
     </table>
   </div>
 
+  <!-- MSAL first so planner can read availability from backend -->
+  <script src="https://alcdn.msauth.net/browser/2.38.2/js/msal-browser.min.js"></script>
   <script src="planner.js"></script>
 </body>
 </html>
