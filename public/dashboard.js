@@ -20,7 +20,7 @@ const loginRequest = {
   ]
 };
 
-const API_URL =
+const PROFILE_API =
   "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net/api/profile";
 
 const msalInstance = new msal.PublicClientApplication(msalConfig);
@@ -33,11 +33,10 @@ function hide(id) { show(id, false); }
 
 // ==== PROFILE FETCH ====
 async function getProfile(accessToken) {
-  const resp = await fetch(API_URL, {
+  const resp = await fetch(PROFILE_API, {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
 
-  // No profile created yet
   if (resp.status === 404) {
     const tokenEmail = msalInstance.getAllAccounts()[0]?.username || "N/A";
     setText("name", "N/A");
@@ -53,9 +52,6 @@ async function getProfile(accessToken) {
   }
 
   const data = await resp.json();
-  console.log("Profile response:", data);
-
-  // API uses: name, email, country, phone
   const tokenEmail = msalInstance.getAllAccounts()[0]?.username || null;
 
   const name = data?.name ?? null;
@@ -75,7 +71,6 @@ async function getProfile(accessToken) {
 async function acquireTokenAndLoadProfile() {
   const accounts = msalInstance.getAllAccounts();
   if (accounts.length === 0) {
-    // Not signed in
     window.location.href = "index.html";
     return;
   }
@@ -89,7 +84,7 @@ async function acquireTokenAndLoadProfile() {
     hide("loadingMessage");
     await getProfile(result.accessToken);
   } catch (silentErr) {
-    console.warn("Silent token failed; trying popup…", silentErr);
+    console.warn("Silent token failed. Trying popup.", silentErr);
     try {
       const result = await msalInstance.acquireTokenPopup(loginRequest);
       hide("errorMessage");
@@ -110,6 +105,77 @@ function signOut() {
     msalInstance.logout({ account: accounts[0] });
   }
 }
+window.signOut = signOut;
+
+// ==== FORECAST WIRING ====
+// Public endpoints. No bearer needed for read.
+const BACKEND_BASE = "https://corelord-backend-etgpd9dfdufragfb.westeurope-01.azurewebsites.net";
+
+const els = {
+  breakSelect: $("breakSelect"),
+  loadForecastBtn: $("loadForecastBtn"),
+  forecastTableBody: $("forecastTableBody"),
+  status: $("status"),
+};
+
+function setStatus(msg) { if (els.status) els.status.textContent = msg || ""; }
+
+async function fetchJson(url) {
+  const res = await fetch(url, { credentials: "omit" });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status} ${res.statusText} ${text}`);
+  }
+  return res.json();
+}
+
+async function loadBreaks() {
+  setStatus("Loading breaks");
+  const data = await fetchJson(`${BACKEND_BASE}/api/forecast/breaks`);
+  if (!Array.isArray(data)) {
+    throw new Error("Unexpected breaks payload");
+  }
+  els.breakSelect.innerHTML = "";
+  for (const b of data) {
+    const opt = document.createElement("option");
+    opt.value = b.id;
+    opt.textContent = `${b.region} • ${b.name}`;
+    els.breakSelect.appendChild(opt);
+  }
+  setStatus("");
+}
+
+function formatHourFromUnix(tsSeconds) {
+  const d = new Date(tsSeconds * 1000);
+  return d.toLocaleString();
+}
+
+function renderForecast(rows) {
+  els.forecastTableBody.innerHTML = "";
+  for (const r of rows) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${formatHourFromUnix(r.ts)}</td>
+      <td>${Number(r.waveHeightM ?? 0).toFixed(2)}</td>
+      <td>${Number(r.swellPeriodS ?? 0).toFixed(1)}</td>
+      <td>${Number(r.windSpeedKt ?? 0).toFixed(1)}</td>
+      <td>${r.swellDir ?? ""}</td>
+    `;
+    els.forecastTableBody.appendChild(tr);
+  }
+}
+
+async function loadForecastForSelectedBreak() {
+  const breakId = els.breakSelect.value;
+  if (!breakId) return;
+  setStatus(`Loading forecast for break ${breakId}`);
+  const data = await fetchJson(`${BACKEND_BASE}/api/forecast/${breakId}`);
+  const items = Array.isArray(data.items) ? data.items : [];
+  const now = Math.floor(Date.now() / 1000);
+  const next24 = items.filter(i => i.ts >= now).slice(0, 24);
+  renderForecast(next24.length ? next24 : items.slice(0, 24));
+  setStatus("");
+}
 
 // ==== BOOT ====
 window.addEventListener("DOMContentLoaded", () => {
@@ -118,8 +184,21 @@ window.addEventListener("DOMContentLoaded", () => {
   show("profile", false);
   show("errorMessage", false);
 
+  // profile first
   acquireTokenAndLoadProfile();
-});
 
-// expose for the Sign Out button
-window.signOut = signOut;
+  // forecast selectors and first render
+  loadBreaks()
+    .then(() => {
+      if (els.loadForecastBtn) {
+        els.loadForecastBtn.addEventListener("click", loadForecastForSelectedBreak);
+      }
+      if (els.breakSelect && els.breakSelect.value) {
+        return loadForecastForSelectedBreak();
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      setStatus(err.message);
+    });
+});

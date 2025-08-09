@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <link rel="stylesheet" href="/nav.css">
-<script src="/nav.js" defer></script>
+  <script src="/nav.js" defer></script>
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -21,20 +21,20 @@
       font-size: 2rem;
       margin-bottom: 1rem;
     }
-    .profile {
-      margin-top: 2rem;
+    .card {
       background-color: #161b22;
-      padding: 1.5rem;
       border-radius: 8px;
       width: 100%;
-      max-width: 400px;
+      max-width: 960px;
+      padding: 1.25rem;
+      margin-top: 1rem;
     }
     .profile p {
       margin: 0.5rem 0;
     }
     #signOutBtn {
-      margin-top: 1.5rem;
-      padding: 0.75rem 1.5rem;
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
       background-color: #ffffff;
       color: #0d1117;
       border: none;
@@ -46,6 +46,43 @@
       font-weight: bold;
       margin-top: 1rem;
     }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+    }
+    select, button {
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      background: #0d1117;
+      color: #fff;
+    }
+    button {
+      background: #238636;
+      border-color: #238636;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid #30363d;
+    }
+    th {
+      font-weight: 600;
+      color: #c9d1d9;
+    }
+    #status {
+      margin: 8px 0;
+      color: #8b949e;
+    }
   </style>
 </head>
 <body>
@@ -53,7 +90,8 @@
 
   <p id="loadingMessage">Loading your profile...</p>
 
-  <div id="profile" class="profile" style="display: none;">
+  <!-- Profile card -->
+  <div id="profile" class="card profile" style="display: none;">
     <p><strong>Name:</strong> <span id="name">N/A</span></p>
     <p><strong>Email:</strong> <span id="email">N/A</span></p>
     <p><strong>Phone:</strong> <span id="phone">N/A</span></p>
@@ -65,6 +103,30 @@
     Session expired or access denied. Please
     <a href="index.html" style="color: #58a6ff;">sign in again</a>.
   </p>
+
+  <!-- Forecast card -->
+  <div class="card">
+    <h2 style="margin-top: 0;">Forecast</h2>
+    <div class="row">
+      <select id="breakSelect" aria-label="Select surf break"></select>
+      <button id="loadForecastBtn" type="button">Load forecast</button>
+    </div>
+
+    <div id="status"></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Wave height m</th>
+          <th>Period s</th>
+          <th>Wind kts</th>
+          <th>Swell dir</th>
+        </tr>
+      </thead>
+      <tbody id="forecastTableBody"></tbody>
+    </table>
+  </div>
 
   <!-- MSAL and page logic -->
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
