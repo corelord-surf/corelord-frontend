@@ -29,7 +29,7 @@ const els = {
   savePrefsBtn: document.getElementById("savePrefsBtn"),
   planBtn: document.getElementById("planBtn"),
   resultsBody: document.getElementById("resultsBody"),
-  status: document.getElementById("status"),
+  status: document.getElementById("status")
 };
 
 function setStatus(text) { els.status.textContent = text || ""; }
@@ -44,18 +44,22 @@ function savePrefs() {
     maxWind: Number(els.prefMaxWind.value || 99),
     regions,
     days: Number(els.prefDays.value || 5),
-    timeOfDay: els.prefTimeOfDay.value || "any",
+    timeOfDay: els.prefTimeOfDay.value || "any"
   };
   localStorage.setItem("corelord.prefs", JSON.stringify(prefs));
   return prefs;
 }
+
 function loadPrefs() {
   try {
     const raw = localStorage.getItem("corelord.prefs");
     if (!raw) return null;
     return JSON.parse(raw);
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
+
 function applyPrefsToForm(p) {
   if (!p) return;
   els.prefMinWave.value = p.minWave;
@@ -69,7 +73,7 @@ function applyPrefsToForm(p) {
   }
 }
 
-// Availability fetch from backend
+// Availability from backend
 async function acquireTokenOptional() {
   try {
     await msalInstance.initialize();
@@ -95,34 +99,36 @@ async function apiGet(url, token) {
   return res.json();
 }
 
-// Returns an array of blocks like { dow: 0..6, startHour: 6, durationHours: 2 }
+// Returns blocks like { dow: 0..6, startHour: 6, durationHours: 2 }
 async function loadAvailabilityFromApi() {
   const token = await acquireTokenOptional();
   if (!token) return null;
   try {
     const items = await apiGet(`${PLANNER_API_BASE}/availability`, token);
-    // API returns Dow and StartHour from your existing page
-    return Array.isArray(items) ? items.map(x => ({
-      dow: Number(x.Dow ?? x.dow),
-      startHour: Number(x.StartHour ?? x.startHour),
-      durationHours: Number(x.DurationHours ?? 2)
-    })) : null;
+    return Array.isArray(items)
+      ? items.map(x => ({
+          dow: Number(x.Dow ?? x.dow),
+          startHour: Number(x.StartHour ?? x.startHour),
+          durationHours: Number(x.DurationHours ?? 2)
+        }))
+      : null;
   } catch (e) {
     console.warn("Availability API not available. Planning without availability.", e);
     return null;
   }
 }
 
-// Filters a unix second ts against availability blocks in local time
+// Check if a unix ts sits within a saved availability window in local time
 function isInAvailability(ts, blocks) {
-  if (!Array.isArray(blocks) || blocks.length === 0) return true; // no blocks means do not restrict
+  if (!Array.isArray(blocks) || blocks.length === 0) return true;
   const d = new Date(ts * 1000);
-  const dow = d.getDay();            // 0..6
-  const hour = d.getHours();         // 0..23
+  const dow = d.getDay();
+  const hour = d.getHours();
   for (const b of blocks) {
-    if (b.dow !== dow) continue;
     const dur = Number.isFinite(b.durationHours) && b.durationHours > 0 ? b.durationHours : 2;
-    if (hour >= b.startHour && hour < b.startHour + dur) return true;
+    if (b.dow === dow && hour >= b.startHour && hour < b.startHour + dur) {
+      return true;
+    }
   }
   return false;
 }
@@ -147,9 +153,11 @@ async function fetchJson(url) {
   }
   return res.json();
 }
+
 async function getBreaks() {
   return fetchJson(`${BACKEND_BASE}/api/forecast/breaks`);
 }
+
 async function getForecast(breakId) {
   return fetchJson(`${BACKEND_BASE}/api/forecast/${breakId}`);
 }
@@ -215,9 +223,7 @@ async function plan() {
   setStatus("Loading availability and breaks");
   const prefs = savePrefs();
 
-  // read availability from backend, optional
   const availabilityBlocks = await loadAvailabilityFromApi();
-
   const breaks = await getBreaks();
 
   const regionSet = new Set(prefs.regions?.length ? prefs.regions : breaks.map(b => b.region));
@@ -234,4 +240,55 @@ async function plan() {
       const fc = await getForecast(b.id);
       const items = Array.isArray(fc.items) ? fc.items : [];
       for (const i of items) {
-        if (i.ts <
+        if (i.ts < now || i.ts > horizon) continue;
+        if (!isInAvailability(i.ts, availabilityBlocks)) continue;
+        if (!isInPreferredTime(i.ts, prefs.timeOfDay)) continue;
+
+        const score = scorePoint(prefs, i);
+        allRows.push({
+          ts: i.ts,
+          breakId: b.id,
+          breakName: b.name,
+          region: b.region,
+          waveHeightM: i.waveHeightM ?? null,
+          swellPeriodS: i.swellPeriodS ?? null,
+          windSpeedKt: i.windSpeedKt ?? null,
+          score
+        });
+      }
+    } catch (e) {
+      console.warn(`Failed forecast for ${b.name}`, e);
+    }
+  }
+
+  allRows.sort((a, b) => b.score - a.score || a.ts - b.ts);
+  renderRows(allRows.slice(0, 40));
+
+  const availMsg = Array.isArray(availabilityBlocks) ? "with availability" : "without availability";
+  setStatus(`Found ${allRows.length} matching hours. Showing top 40, ${availMsg}.`);
+}
+
+// Wire up
+els.savePrefsBtn.addEventListener("click", () => {
+  savePrefs();
+  setStatus("Saved");
+  setTimeout(() => setStatus(""), 800);
+});
+
+els.planBtn.addEventListener("click", () => {
+  plan().catch(err => {
+    console.error(err);
+    setStatus(err.message);
+  });
+});
+
+// First load
+(function init() {
+  const stored = loadPrefs();
+  if (stored?.regions?.length) {
+    applyPrefsToForm(stored);
+  } else {
+    for (const opt of els.prefRegions.options) opt.selected = true;
+  }
+  console.log("CoreLord planner loaded");
+})();
