@@ -70,8 +70,7 @@
     return dirs[ix];
   };
 
-  // Pack arrays used across all charts (labels for tooltip, plus metrics)
-  // IMPORTANT: field names line up with your backend (/routes/forecast.js)
+  // Pack arrays used across all charts
   function packSeries(slice) {
     return {
       labels: slice.map(x => tsToLabelHour(x.ts)),
@@ -86,13 +85,11 @@
     };
   }
 
-  // Build 24h shaped series (hourly points)
   function shapeDaily24(items) {
     const take = Math.min(24, items.length);
     return packSeries(items.slice(0, take));
   }
 
-  // Weekly: keep ALL hourly points (up to 168), add day ticks only
   function shapeWeeklyContinuous(items) {
     const shaped = packSeries(items);
     const map = new Map();
@@ -115,7 +112,7 @@
       ticks: {
         color: "#9aa0a6",
         maxRotation: 0,
-        autoSkip: false, // we decide exactly which ticks render
+        autoSkip: false,
         callback: (_val, idx) =>
           isWeekly ? (tickLabelMap?.get(idx) ?? "") : (labels[idx] ?? ""),
       },
@@ -123,7 +120,7 @@
     };
   }
 
-  // ---------- Summary chart ----------
+  // ---------- Summary ----------
   function buildSummary(shaped, mode) {
     if (!ctxSummary) return;
     summaryChart?.destroy();
@@ -280,7 +277,7 @@
     });
   }
 
-  // Checkbox toggles affect only the summary chart
+  // Checkboxes affect only the summary chart
   els.chkWave?.addEventListener("change", () => { if (!summaryChart) return; summaryChart.data.datasets[0].hidden = !els.chkWave.checked; summaryChart.update(); });
   els.chkWind?.addEventListener("change", () => { if (!summaryChart) return; summaryChart.data.datasets[1].hidden = !els.chkWind.checked; summaryChart.update(); });
   els.chkTide?.addEventListener("change", () => { if (!summaryChart) return; summaryChart.data.datasets[2].hidden = !els.chkTide.checked; summaryChart.update(); });
@@ -291,7 +288,8 @@
 
   // ---------- API ----------
   async function loadForecast168(breakId) {
-    const url = `${API_URL}/api/forecast/timeseries?breakId=${breakId}&hours=168&includeTide=1`;
+    // NOTE: no includeTide flag — backend is cache-only
+    const url = `${API_URL}/api/forecast/timeseries?breakId=${breakId}&hours=168`;
     const t0 = performance.now();
     const res = await fetch(url, { cache: "no-store" });
     const txt = await res.text();
